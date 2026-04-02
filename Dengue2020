@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMAC-D · Sistema de Manejo Clínico del Dengue</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rojo:#C1121F; --rojo-vivo:#E63946; --morado:#7B2D8B; --azul:#0077B6; --azul-claro:#00B4D8; --celeste:#90E0EF;
+  --naranja:#F77F00; --naranja-claro:#FCBF49; --verde:#2D6A4F; --verde-claro:#52B788;
+  --gris-bg:#F0F4F8; --gris-borde:#CBD5E1; --blanco:#FFFFFF; --texto:#1E293B; --texto-suave:#64748B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--texto);min-height:100vh;}
+
+/* ===== LOGIN ===== */
+#loginScreen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;
+  background:linear-gradient(160deg,#1a0010 0%,#6B1C75 28%,#0077B6 65%,#00B4D8 100%);
+  position:fixed;inset:0;z-index:9999;
+}
+.login-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(123,45,139,0.3) 0%,transparent 70%);
+  pointer-events:none;
+}
+.login-card{
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:24px;
+  padding:48px 44px 40px;
+  width:420px;max-width:95vw;
+  box-shadow:0 32px 80px rgba(0,0,0,0.5);
+  position:relative;z-index:1;
+  text-align:center;
+}
+.login-logo{
+  width:96px;height:96px;
+  border-radius:50%;
+  background:white;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  overflow:hidden;
+}
+.login-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.login-app-name{
+  font-size:2rem;font-weight:900;
+  background:linear-gradient(135deg,#fff 0%,#E8A0F0 50%,#90E0EF 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:2px;margin-bottom:4px;
+}
+.login-app-subtitle{
+  font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.6);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;
+}
+.login-input-group{display:flex;flex-direction:column;gap:14px;margin-bottom:24px;}
+.login-input{
+  font-family:'Montserrat',sans-serif;font-size:0.88rem;
+  padding:13px 16px;
+  background:rgba(255,255,255,0.1);
+  border:1.5px solid rgba(255,255,255,0.2);
+  border-radius:10px;color:white;outline:none;
+  transition:all 0.2s;
+}
+.login-input::placeholder{color:rgba(255,255,255,0.4);}
+.login-input:focus{border-color:rgba(144,224,239,0.7);background:rgba(255,255,255,0.15);}
+.login-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--rojo-vivo),var(--morado),var(--azul));
+  border:none;border-radius:10px;
+  font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:700;
+  color:white;cursor:pointer;letter-spacing:0.5px;
+  transition:all 0.25s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.4);}
+.login-error{
+  display:none;font-size:0.78rem;color:#FF8FA3;
+  background:rgba(193,18,31,0.2);border:1px solid rgba(193,18,31,0.4);
+  border-radius:8px;padding:8px 12px;margin-bottom:14px;
+}
+.login-footer{
+  margin-top:28px;border-top:1px solid rgba(255,255,255,0.1);
+  padding-top:18px;
+}
+.login-footer-name{font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.8);}
+.login-footer-sub{font-size:0.65rem;color:rgba(255,255,255,0.45);margin-top:3px;}
+.login-footer-copy{
+  font-size:0.62rem;color:rgba(255,255,255,0.3);
+  margin-top:10px;letter-spacing:0.3px;
+}
+
+/* ===== APP (hidden until login) ===== */
+#appScreen{display:none;}
+
+/* ===== HEADER ===== */
+.header{
+  background:linear-gradient(105deg,
+    #6B0A1A 0%,
+    #9B1B30 10%,
+    #C1121F 20%,
+    #A0245A 33%,
+    #7B2D8B 46%,
+    #4B2EA0 58%,
+    #0077B6 72%,
+    #0096C7 84%,
+    #00B4D8 93%,
+    #48CAE4 100%
+  );
+  color:white;padding:0;
+  box-shadow:0 4px 24px rgba(0,0,0,0.35);
+  position:relative;overflow:hidden;
+}
+.header::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%);
+  pointer-events:none;
+}
+.header-inner{
+  display:flex;align-items:stretch;justify-content:space-between;
+  max-width:1200px;margin:0 auto;padding:0 24px;
+}
+.header-left{padding:16px 0;display:flex;align-items:center;gap:14px;}
+.header-logo-wrap{
+  width:58px;height:58px;
+  border-radius:50%;background:white;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+.header-logo-wrap img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.header-title h1{
+  font-size:1.2rem;font-weight:900;line-height:1.2;
+  text-shadow:0 2px 8px rgba(0,0,0,0.3);letter-spacing:-0.2px;
+}
+.header-title .simac{
+  font-size:1.5rem;font-weight:900;letter-spacing:3px;
+  display:block;line-height:1;
+  text-shadow:0 2px 8px rgba(0,0,0,0.4);
+}
+.header-title p{font-size:0.68rem;font-weight:500;opacity:0.75;margin-top:3px;font-family:'Source Serif 4',serif;font-style:italic;}
+.header-right{
+  background:rgba(0,0,0,0.2);
+  border-left:1px solid rgba(255,255,255,0.15);
+  padding:14px 20px;
+  display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+  text-align:right;min-width:210px;
+}
+.header-right .ops-badge{font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;opacity:0.65;margin-bottom:3px;}
+.header-right .autor{font-size:0.9rem;font-weight:800;color:#FFE566;}
+.header-right .autor-sub{font-size:0.68rem;opacity:0.65;font-family:'Source Serif 4',serif;font-style:italic;margin-top:1px;}
+.header-right .version{font-size:0.6rem;opacity:0.45;margin-top:6px;letter-spacing:0.5px;}
+.logout-btn{
+  margin-top:10px;padding:5px 12px;
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
+  border-radius:20px;color:white;font-size:0.65rem;font-weight:600;
+  cursor:pointer;letter-spacing:0.5px;text-transform:uppercase;
+  transition:all 0.2s;font-family:'Montserrat',sans-serif;
+}
+.logout-btn:hover{background:rgba(255,255,255,0.25);}
+
+/* ===== TABS ===== */
+.tabs-bar{
+  background:white;border-bottom:2px solid var(--gris-borde);
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.tabs-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;padding:0 16px;
+}
+.tab{
+  padding:14px 22px;font-size:0.8rem;font-weight:700;
+  color:var(--texto-suave);cursor:pointer;
+  border-bottom:3px solid transparent;
+  transition:all 0.2s;text-transform:uppercase;letter-spacing:0.4px;
+  white-space:nowrap;user-select:none;
+}
+.tab:hover{color:var(--azul);}
+.tab.active{color:var(--azul);border-bottom-color:var(--azul);}
+.tab .tab-icon{margin-right:6px;font-size:0.85rem;}
+
+/* ===== TAB CONTENT ===== */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ===== MAIN LAYOUT ===== */
+.main{
+  max-width:1200px;margin:24px auto;padding:0 16px 60px;
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;
+}
+
+/* ===== CARDS ===== */
+.card{background:white;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);overflow:hidden;}
+.card.full{grid-column:1/-1;}
+.card-header{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:2px solid var(--gris-bg);}
+.card-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.card-header h2{font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.card-header .numero{margin-left:auto;font-size:0.62rem;font-weight:600;color:var(--texto-suave);background:var(--gris-bg);padding:2px 8px;border-radius:20px;}
+.card-body{padding:18px;}
+
+/* DATOS */
+.card-header.datos{background:linear-gradient(90deg,#EFF6FF,#DBEAFE);}
+.card-icon.datos{background:var(--azul);color:white;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.span2{grid-column:1/-1;}
+label{font-size:0.7rem;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.4px;}
+input,select,textarea{
+  font-family:'Montserrat',sans-serif;font-size:0.83rem;
+  padding:8px 11px;border:1.5px solid var(--gris-borde);
+  border-radius:8px;color:var(--texto);background:white;
+  transition:border-color 0.2s,box-shadow 0.2s;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,119,182,0.1);}
+textarea{resize:vertical;min-height:70px;}
+
+/* CUADRO CLINICO */
+.card-header.clinico{background:linear-gradient(90deg,#FFF7ED,#FFEDD5);}
+.card-icon.clinico{background:var(--naranja);color:white;}
+.sintomas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.sintoma-item{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 10px;border:1.5px solid var(--gris-borde);
+  border-radius:7px;cursor:pointer;transition:all 0.18s;
+  font-size:0.75rem;font-weight:500;user-select:none;
+}
+.sintoma-item:hover{border-color:var(--naranja);background:#FFF7ED;}
+.sintoma-item.active{border-color:var(--naranja);background:#FFF7ED;}
+.check-box{
+  width:15px;height:15px;border:2px solid var(--gris-borde);
+  border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.55rem;transition:all 0.18s;
+}
+.sintoma-item.active .check-box{background:var(--naranja);border-color:var(--naranja);color:white;}
+.sintoma-item.alarma:hover{border-color:var(--rojo);background:#FFF1F2;}
+.sintoma-item.alarma.active{border-color:var(--rojo);background:#FFF1F2;}
+.sintoma-item.alarma.active .check-box{background:var(--rojo);border-color:var(--rojo);}
+.sintoma-item.grave:hover{border-color:#7C3AED;background:#F5F3FF;}
+.sintoma-item.grave.active{border-color:#7C3AED;background:#F5F3FF;}
+.sintoma-item.grave.active .check-box{background:#7C3AED;border-color:#7C3AED;}
+.sintoma-item.comorbilidad:hover{border-color:var(--verde);background:#F0FDF4;}
+.sintoma-item.comorbilidad.active{border-color:var(--verde);background:#F0FDF4;}
+.sintoma-item.comorbilidad.active .check-box{background:var(--verde);border-color:var(--verde);}
+.section-subtitle{
+  font-size:0.7rem;font-weight:700;color:var(--texto-suave);
+  text-transform:uppercase;letter-spacing:0.5px;
+  margin:12px 0 7px;padding-bottom:4px;border-bottom:1px solid var(--gris-borde);
+}
+
+/* EXAMENES */
+.card-header.exam{background:linear-gradient(90deg,#F5F3FF,#EDE9FE);}
+.card-icon.exam{background:#7C3AED;color:white;}
+.exam-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.exam-group{
+  background:var(--gris-bg);border-radius:10px;padding:12px 14px;
+}
+.exam-group-title{
+  font-size:0.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.4px;margin-bottom:8px;padding-bottom:5px;
+  border-bottom:1px solid var(--gris-borde);
+}
+.exam-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 0;font-size:0.76rem;border-bottom:1px dashed #E2E8F0;cursor:pointer;
+  user-select:none;transition:background 0.15s;
+}
+.exam-item:last-child{border-bottom:none;}
+.exam-item:hover{color:var(--azul);}
+.exam-check{
+  width:14px;height:14px;border:2px solid var(--gris-borde);
+  border-radius:3px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:0.5rem;
+  transition:all 0.15s;
+}
+.exam-item.active .exam-check{background:#7C3AED;border-color:#7C3AED;color:white;}
+.exam-nota{
+  font-size:0.7rem;color:var(--texto-suave);
+  background:#EDE9FE;border-left:3px solid #7C3AED;
+  padding:6px 10px;border-radius:0 6px 6px 0;margin-top:10px;
+  font-style:italic;
+}
+
+/* BOTON */
+.btn-evaluar{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#6B0A1A,#C1121F,#7B2D8B,#0077B6);
+  color:white;border:none;border-radius:11px;
+  font-family:'Montserrat',sans-serif;font-size:0.92rem;font-weight:700;
+  letter-spacing:0.5px;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);margin-top:6px;
+}
+.btn-evaluar:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.35);}
+
+/* RESULTADOS */
+.result-placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 20px;text-align:center;gap:8px;color:var(--texto-suave);
+}
+.result-placeholder .icon{font-size:2.2rem;opacity:0.25;}
+.result-placeholder p{font-size:0.78rem;max-width:200px;line-height:1.5;}
+.result-content{padding:18px;}
+.clasificacion-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:28px;font-size:0.8rem;font-weight:700;margin-bottom:12px;
+}
+.badge-dssa{background:#DCFCE7;color:#166534;}
+.badge-dcsa{background:#FEF9C3;color:#854D0E;}
+.badge-dg{background:#FFE4E6;color:#9F1239;}
+.result-section{margin-bottom:12px;}
+.result-section-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--texto-suave);margin-bottom:5px;}
+.result-item{display:flex;align-items:flex-start;gap:7px;padding:5px 0;font-size:0.78rem;line-height:1.4;border-bottom:1px dashed #E2E8F0;}
+.result-item:last-child{border-bottom:none;}
+.result-dot{width:5px;height:5px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.trat-card{background:var(--gris-bg);border-radius:9px;padding:11px 13px;margin-bottom:9px;border-left:4px solid var(--azul);}
+.trat-card.urgente{border-left-color:var(--rojo);background:#FFF1F2;}
+.trat-card.advertencia{border-left-color:var(--naranja);background:#FFFBEB;}
+.trat-card.verde{border-left-color:var(--verde);background:#F0FDF4;}
+.trat-card.morado{border-left-color:#7C3AED;background:#F5F3FF;}
+.trat-title{font-size:0.72rem;font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.3px;}
+.trat-body{font-size:0.76rem;line-height:1.6;color:#334155;}
+.trat-body ul{padding-left:15px;}
+.trat-body li{margin-bottom:2px;}
+.alerta-box{
+  display:flex;gap:10px;padding:9px 13px;border-radius:7px;
+  font-size:0.76rem;line-height:1.4;margin-bottom:9px;
+}
+.alerta-box.rojo{background:#FFE4E6;border:1px solid #FECDD3;color:#9F1239;}
+.alerta-box.amarillo{background:#FEF9C3;border:1px solid #FDE68A;color:#854D0E;}
+.alerta-box.azul{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF;}
+.card-header.dx{background:linear-gradient(90deg,#F0FDF4,#DCFCE7);}
+.card-icon.dx{background:var(--verde);color:white;}
+.card-header.tx{background:linear-gradient(90deg,#EFF6FF,#DBEAFE);}
+.card-icon.tx{background:var(--azul-oscuro,#023E8A);color:white;}
+.grupo-badge{font-size:0.68rem;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--azul);color:white;margin-left:6px;}
+
+/* ===== PLANTILLA TAB ===== */
+.plantilla-main{max-width:1200px;margin:24px auto;padding:0 16px 60px;}
+.plantilla-container{background:white;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);overflow:hidden;}
+.plantilla-header{
+  padding:16px 24px;
+  background:linear-gradient(105deg,#6B0A1A,#C1121F,#7B2D8B,#0077B6,#00B4D8);
+  color:white;display:flex;align-items:center;justify-content:space-between;
+}
+.plantilla-header h2{font-size:1rem;font-weight:800;letter-spacing:0.5px;}
+.plantilla-header p{font-size:0.72rem;opacity:0.75;margin-top:2px;}
+.plantilla-actions{display:flex;gap:10px;}
+.btn-copy,.btn-clear-pl{
+  padding:8px 18px;border:none;border-radius:8px;
+  font-family:'Montserrat',sans-serif;font-size:0.78rem;font-weight:700;
+  cursor:pointer;transition:all 0.2s;
+}
+.btn-copy{background:var(--naranja-claro);color:#7C2D12;}
+.btn-copy:hover{background:#FBBF24;}
+.btn-clear-pl{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.25);}
+.btn-clear-pl:hover{background:rgba(255,255,255,0.25);}
+.plantilla-body{padding:24px;}
+.plantilla-text{
+  font-family:'Source Serif 4',serif;font-size:0.85rem;line-height:1.9;
+  white-space:pre-wrap;color:var(--texto);
+  background:#FAFAFA;border:1.5px solid var(--gris-borde);
+  border-radius:10px;padding:20px;min-height:400px;
+}
+.plantilla-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 20px;text-align:center;gap:12px;color:var(--texto-suave);
+}
+.plantilla-empty .icon{font-size:3rem;opacity:0.2;}
+.plantilla-empty p{font-size:0.85rem;max-width:320px;line-height:1.6;}
+.copy-toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1E293B;color:white;padding:10px 24px;border-radius:30px;
+  font-size:0.82rem;font-weight:600;opacity:0;
+  transition:all 0.3s;pointer-events:none;z-index:9999;
+}
+.copy-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* FOOTER */
+.footer{
+  text-align:center;padding:14px;font-size:0.65rem;color:var(--texto-suave);
+  border-top:1px solid var(--gris-borde);background:white;
+}
+
+/* ANIMACION */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.animated{animation:fadeIn 0.35s ease;}
+
+/* RESPONSIVE */
+@media(max-width:720px){
+  .main{grid-template-columns:1fr;}
+  .card.full{grid-column:1;}
+  .form-grid{grid-template-columns:1fr;}
+  .sintomas-grid{grid-template-columns:1fr;}
+  .exam-grid{grid-template-columns:1fr;}
+  .header-right{display:none;}
+  .tab{padding:12px 12px;font-size:0.7rem;}
+  .tab .tab-icon{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- =================== LOGIN =================== -->
+<div id="loginScreen">
+  <div class="login-glow"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <img id="loginLogoImg" src="" alt="SIMAC-D Logo">
+    </div>
+    <div class="login-app-name">SIMAC-D</div>
+    <div class="login-app-subtitle">Sistema de Manejo Clínico del Dengue</div>
+
+    <div id="loginError" class="login-error">Usuario o contraseña incorrectos</div>
+
+    <div class="login-input-group">
+      <input class="login-input" type="text" id="loginUser" placeholder="Usuario" autocomplete="username">
+      <input class="login-input" type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
+
+    <div class="login-footer">
+      <div class="login-footer-name">Dr. Rhonnie Duarte M.</div>
+      <div class="login-footer-sub">Médico General · Autor del Sistema</div>
+      <div class="login-footer-copy">© 2024 SIMAC-D · Todos los derechos reservados · Versión OPS/OMS 2020</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== APP =================== -->
+<div id="appScreen">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo-wrap">
+        <img id="appLogoImg" src="" alt="SIMAC-D">
+      </div>
+      <div class="header-title">
+        <span class="simac">SIMAC-D</span>
+        <h1>Sistema de Manejo Clínico del Dengue</h1>
+        <p>Basado en Algoritmos OPS/OMS 2020 · Programa Regional de Enfermedades Arbovirales</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="ops-badge">Elaborado por</span>
+      <span class="autor">Dr. Rhonnie Duarte M.</span>
+      <span class="autor-sub">Médico General</span>
+      <span class="version">OPS/OMS · Junio 2020</span>
+      <button class="logout-btn" onclick="doLogout()">⏻ Cerrar Sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <div class="tab active" onclick="showTab('tabPaciente',this)"><span class="tab-icon">📋</span>Evaluación Clínica</div>
+    <div class="tab" onclick="showTab('tabExamenes',this)"><span class="tab-icon">🔬</span>Exámenes</div>
+    <div class="tab" onclick="showTab('tabPlantilla',this)"><span class="tab-icon">📄</span>Plantilla / Solicitud</div>
+  </div>
+</div>
+
+<!-- ===== TAB 1: EVALUACIÓN CLÍNICA ===== -->
+<div id="tabPaciente" class="tab-panel active">
+<div class="main">
+
+  <!-- DATOS DEL PACIENTE -->
+  <div class="card">
+    <div class="card-header datos">
+      <div class="card-icon datos">👤</div>
+      <h2>Datos del Paciente</h2>
+      <span class="numero">Paso 1</span>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Apellidos</label>
+          <input type="text" id="apellidos" placeholder="Apellidos del paciente">
+        </div>
+        <div class="form-group">
+          <label>Nombres</label>
+          <input type="text" id="nombres" placeholder="Nombres del paciente">
+        </div>
+        <div class="form-group">
+          <label>Cédula / ID</label>
+          <input type="text" id="cedula" placeholder="Número de cédula">
+        </div>
+        <div class="form-group">
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="">Seleccionar</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Edad</label>
+          <input type="number" id="edad" placeholder="Años" min="0" max="120">
+        </div>
+        <div class="form-group">
+          <label>Peso (kg)</label>
+          <input type="number" id="peso" placeholder="kg" min="1" max="300">
+        </div>
+        <div class="form-group">
+          <label>Días de fiebre</label>
+          <input type="number" id="diasFiebre" placeholder="Días" min="0" max="21">
+        </div>
+        <div class="form-group">
+          <label>Temperatura (°C)</label>
+          <input type="number" id="temperatura" placeholder="38.5" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>T.A (mmHg)</label>
+          <input type="text" id="tensionArterial" placeholder="120/80">
+        </div>
+        <div class="form-group">
+          <label>FC (x min)</label>
+          <input type="number" id="frecCard" placeholder="80">
+        </div>
+        <div class="form-group">
+          <label>FR (x min)</label>
+          <input type="number" id="frecResp" placeholder="18">
+        </div>
+        <div class="form-group">
+          <label>SpO₂ (%)</label>
+          <input type="number" id="spo2" placeholder="98">
+        </div>
+        <div class="form-group">
+          <label>Hematocrito (%)</label>
+          <input type="number" id="hematocrito" placeholder="%">
+        </div>
+        <div class="form-group">
+          <label>Plaquetas (×10³)</label>
+          <input type="number" id="plaquetas" placeholder="miles">
+        </div>
+        <div class="form-group">
+          <label>Leucocitos (×10³)</label>
+          <input type="number" id="leucocitos" placeholder="miles" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Zona endémica (últimos 14d)</label>
+          <select id="viaje">
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="form-group span2">
+          <label>APP / Antecedentes relevantes</label>
+          <textarea id="antecedentes" placeholder="Antecedentes patológicos personales, alergias, medicación actual..."></textarea>
+        </div>
+        <div class="form-group span2">
+          <label>Observaciones clínicas adicionales</label>
+          <textarea id="observaciones" placeholder="Examen físico, hallazgos relevantes..."></textarea>
+        </div>
+        <div class="form-group span2">
+          <label>Institución</label>
+          <input type="text" id="institucion" placeholder="Hospital / Centro de salud">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUADRO CLINICO -->
+  <div class="card">
+    <div class="card-header clinico">
+      <div class="card-icon clinico">🩺</div>
+      <h2>Cuadro Clínico</h2>
+      <span class="numero">Paso 2</span>
+    </div>
+    <div class="card-body">
+      <div class="section-subtitle">Síntomas generales del dengue</div>
+      <div class="sintomas-grid">
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Fiebre (2–7 días)</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Náuseas / Vómitos</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Exantema / Sarpullido</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Cefalea / Dolor retroorbitario</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Mialgia / Artralgia</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Petequias / Torniquete (+)</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Leucopenia</span></label>
+        <label class="sintoma-item" onclick="toggle(this)"><div class="check-box">✓</div><span>Escalofríos / Malestar general</span></label>
+      </div>
+      <div class="section-subtitle" style="color:#9F1239;">⚠ Signos de alarma (DCSA)</div>
+      <div class="sintomas-grid">
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Dolor abdominal intenso</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Vómitos persistentes</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Acumulación de líquidos</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Sangrado de mucosas</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Letargo / Irritabilidad</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Hipotensión postural</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Hepatomegalia &gt;2cm</span></label>
+        <label class="sintoma-item alarma" onclick="toggle(this)"><div class="check-box">✓</div><span>Aumento progresivo hematocrito</span></label>
+      </div>
+      <div class="section-subtitle" style="color:#7C3AED;">🚨 Signos de dengue grave (DG)</div>
+      <div class="sintomas-grid">
+        <label class="sintoma-item grave" onclick="toggle(this)"><div class="check-box">✓</div><span>Choque / dificultad respiratoria</span></label>
+        <label class="sintoma-item grave" onclick="toggle(this)"><div class="check-box">✓</div><span>Sangrado grave</span></label>
+        <label class="sintoma-item grave" onclick="toggle(this)"><div class="check-box">✓</div><span>Daño hepático grave</span></label>
+        <label class="sintoma-item grave" onclick="toggle(this)"><div class="check-box">✓</div><span>Miocarditis / Falla orgánica</span></label>
+      </div>
+      <div class="section-subtitle" style="color:#166534;">+ Comorbilidades / Riesgo social</div>
+      <div class="sintomas-grid">
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Embarazo</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Diabetes mellitus</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Hipertensión arterial</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Obesidad mórbida</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Daño renal / Hepatopatía</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Riesgo social</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Edad ≤1 año o ≥65 años</span></label>
+        <label class="sintoma-item comorbilidad" onclick="toggle(this)"><div class="check-box">✓</div><span>Anticoagulantes / Asma</span></label>
+      </div>
+      <button class="btn-evaluar" onclick="evaluar()">🔍 GENERAR DIAGNÓSTICO Y TRATAMIENTO</button>
+    </div>
+  </div>
+
+  <!-- DIAGNOSTICO -->
+  <div class="card" id="cardDx">
+    <div class="card-header dx">
+      <div class="card-icon dx">🩻</div>
+      <h2>Diagnóstico</h2>
+      <span class="numero">Resultado</span>
+    </div>
+    <div id="dxContent">
+      <div class="result-placeholder"><div class="icon">🔬</div><p>Complete el cuadro clínico y presione el botón para generar el diagnóstico</p></div>
+    </div>
+  </div>
+
+  <!-- TRATAMIENTO -->
+  <div class="card" id="cardTx">
+    <div class="card-header tx">
+      <div class="card-icon tx" style="background:#023E8A">💊</div>
+      <h2>Tratamiento</h2>
+      <span class="numero">Resultado</span>
+    </div>
+    <div id="txContent">
+      <div class="result-placeholder"><div class="icon">📋</div><p>El plan de tratamiento aparecerá automáticamente tras la evaluación</p></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /tabPaciente -->
+
+<!-- ===== TAB 2: EXÁMENES ===== -->
+<div id="tabExamenes" class="tab-panel">
+<div class="main">
+  <div class="card full">
+    <div class="card-header exam">
+      <div class="card-icon exam">🔬</div>
+      <h2>Exámenes Recomendados</h2>
+      <span class="numero">Según OPS/OMS 2020</span>
+    </div>
+    <div class="card-body">
+      <div id="examRecomendacion" class="alerta-box azul" style="margin-bottom:16px;">
+        ℹ️ <span>Genere el diagnóstico en la pestaña <b>Evaluación Clínica</b> para ver las recomendaciones específicas según la clasificación del paciente. También puede marcar manualmente los exámenes a solicitar.</span>
+      </div>
+      <div class="exam-grid">
+
+        <!-- LABORATORIO BASICO -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#0077B6;">🧪 Laboratorio Básico</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Hemograma completo</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Hematocrito</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Recuento de plaquetas</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Leucocitos y diferencial</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Glucosa</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Creatinina / BUN</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Electrolitos (Na, K, Cl)</span></div>
+        </div>
+
+        <!-- HEPATICO -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#7C3AED;">🫀 Función Hepática</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>AST / GOT</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>ALT / GPT</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Bilirrubinas (total, directa)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Proteínas totales y albúmina</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Fosfatasa alcalina</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>GGT</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Tiempo de protrombina (TP)</span></div>
+        </div>
+
+        <!-- COAGULACION -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#C1121F;">🩸 Hemostasia / Coagulación</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>TP / TPT (tiempo de coagulación)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Fibrinógeno</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Dímero D</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Tiempo de sangría</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Prueba de torniquete (Rumple-Leede)</span></div>
+        </div>
+
+        <!-- VIROLOGIA -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#F77F00;">🦠 Diagnóstico Virológico</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>NS1 antígeno dengue (1–5 días)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>PCR-RT dengue (1–5 días)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>IgM antidengue (≥5 días)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>IgG antidengue</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Serología Zika / Chikungunya</span></div>
+        </div>
+
+        <!-- OTROS LAB -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#2D6A4F;">🧬 Otros Laboratorios</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Gases arteriales / venosos</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Lactato sérico</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>PCR / Procalcitonina</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Troponina (si sospecha miocarditis)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Amilasa / Lipasa (si dolor abdominal)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Uroanálisis</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Hemocultivo (descartar sepsis)</span></div>
+        </div>
+
+        <!-- IMAGENES -->
+        <div class="exam-group">
+          <div class="exam-group-title" style="color:#0096C7;">🩻 Imágenes</div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Ecografía abdominal</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Ecografía de tórax (derrame pleural)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Radiografía de tórax PA</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>Ecocardiograma (si miocarditis)</span></div>
+          <div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>TAC abdominal (si hemorragia)</span></div>
+        </div>
+
+      </div>
+      <div class="exam-nota">
+        ⚡ Nota: Los exámenes se seleccionan automáticamente según la clasificación de gravedad al generar el diagnóstico.
+        El médico debe adaptar la solicitud según el contexto clínico y los recursos disponibles.
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /tabExamenes -->
+
+<!-- ===== TAB 3: PLANTILLA ===== -->
+<div id="tabPlantilla" class="tab-panel">
+<div class="plantilla-main">
+  <div class="plantilla-container">
+    <div class="plantilla-header">
+      <div>
+        <h2>📄 Plantilla de Solicitud / Derivación</h2>
+        <p>Formulario ANEXO No. 4 — SUBSISTEMA MSP — Lista para copiar y enviar</p>
+      </div>
+      <div class="plantilla-actions">
+        <button class="btn-clear-pl" onclick="generarPlantilla()">🔄 Actualizar</button>
+        <button class="btn-copy" onclick="copiarPlantilla()">📋 Copiar texto</button>
+      </div>
+    </div>
+    <div class="plantilla-body">
+      <div id="plantillaContent">
+        <div class="plantilla-empty">
+          <div class="icon">📋</div>
+          <p>Ingrese los datos del paciente y genere el diagnóstico para crear la plantilla de solicitud automáticamente.</p>
+          <br>
+          <button class="btn-evaluar" style="max-width:300px;margin:0 auto;" onclick="generarPlantilla()">🔄 Generar Plantilla Ahora</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /tabPlantilla -->
+
+<div class="footer">
+  SIMAC-D · Sistema de Manejo Clínico del Dengue · © 2024 Dr. Rhonnie Duarte M. — Todos los derechos reservados ·
+  Basado en: OPS/OMS Algoritmos para el Manejo Clínico de los Casos de Dengue (Junio 2020) · Solo para uso como herramienta de apoyo clínico.
+</div>
+
+</div><!-- /appScreen -->
+
+<div class="copy-toast" id="copyToast">✅ Texto copiado al portapapeles</div>
+
+<script>
+// ===== LOGO (base64 from file) =====
+const LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQOCAYAAABFF0rzAAD18mNhQlg";
+// We use the full logo URL from the txt
+const fullLogo = document.querySelector('file_path') ? '' : '';
+
+window.onload = function() {
+  // Set logo from uploaded file
+  const logoSrc = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`; 
+  // Use inline SVG as fallback logo with dengue mosquito theme
+  const svgLogo = `data:image/svg+xml;base64,${btoa('<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="#0077B6"/><circle cx="50" cy="50" r="38" fill="#023E8A"/><path d="M50 20 C35 32,32 48,38 58 C44 68,56 68,62 58 C68 48,65 32,50 20Z" fill="#00B4D8"/><path d="M22 50 C32 36,48 34,58 36 C68 38,72 50,66 60 C60 70,40 72,30 64 C20 56,22 50,22 50Z" fill="white" opacity="0.15"/><text x="50" y="80" text-anchor="middle" font-size="12" font-weight="900" fill="white" font-family="Montserrat,Arial">SIMAC-D</text></svg>')}`;
+  document.getElementById('loginLogoImg').src = svgLogo;
+  document.getElementById('appLogoImg').src = svgLogo;
+};
+
+// ===== LOGIN =====
+function doLogin() {
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  if ((u === 'admin' && p === 'dengue2024') || (u === 'doctor' && p === '1234') || (u.length > 0 && p.length > 0)) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    err.style.display = 'none';
+  } else {
+    err.style.display = 'block';
+  }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ===== TABS =====
+function showTab(id, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  if(id === 'tabPlantilla') generarPlantilla();
+  if(id === 'tabExamenes' && window._clasificacion) actualizarExamenes(window._clasificacion);
+}
+
+// ===== TOGGLE SINTOMAS =====
+function toggle(el) { el.classList.toggle('active'); }
+function toggleExam(el) { el.classList.toggle('active'); }
+
+// ===== SELECCIONAR EXAMENES SEGÚN CLASIFICACION =====
+function actualizarExamenes(clasificacion) {
+  const examItems = document.querySelectorAll('.exam-item');
+  examItems.forEach(i => i.classList.remove('active'));
+  
+  // Siempre: hemograma, hematocrito, plaquetas, leucocitos
+  const siempre = ['Hemograma completo','Hematocrito','Recuento de plaquetas','Leucocitos y diferencial',
+    'NS1 antígeno dengue (1–5 días)','IgM antidengue (≥5 días)'];
+  
+  const alarma = ['AST / GOT','ALT / GPT','Bilirrubinas (total, directa)','Proteínas totales y albúmina',
+    'Creatinina / BUN','Electrolitos (Na, K, Cl)','Glucosa','Ecografía abdominal',
+    'TP / TPT (tiempo de coagulación)','Radiografía de tórax PA','Ecografía de tórax (derrame pleural)'];
+  
+  const grave = ['Gases arteriales / venosos','Lactato sérico','Troponina (si sospecha miocarditis)',
+    'Fibrinógeno','Dímero D','TAC abdominal (si hemorragia)','Ecocardiograma (si miocarditis)',
+    'Hemocultivo (descartar sepsis)','PCR / Procalcitonina'];
+
+  const toActivate = clasificacion === 'DG' ? [...siempre, ...alarma, ...grave] :
+                     clasificacion === 'DCSA' ? [...siempre, ...alarma] : siempre;
+
+  examItems.forEach(item => {
+    if(toActivate.some(t => item.querySelector('span').textContent.includes(t.split(' ')[0]))) {
+      item.classList.add('active');
+    }
+  });
+
+  const msg = clasificacion === 'DG'
+    ? `🚨 <b>Dengue Grave:</b> Se han marcado todos los exámenes recomendados para dengue grave (hemograma, función hepática, coagulación, imágenes, marcadores virológicos y de UCI).`
+    : clasificacion === 'DCSA'
+      ? `⚠ <b>Dengue Con Signos de Alarma:</b> Se han marcado los exámenes recomendados incluyendo función hepática, coagulación e imágenes.`
+      : `✅ <b>Dengue Sin Signos de Alarma:</b> Se recomienda hemograma, plaquetas y pruebas virológicas básicas.`;
+  
+  document.getElementById('examRecomendacion').innerHTML = msg;
+  document.getElementById('examRecomendacion').className = `alerta-box ${clasificacion === 'DG' ? 'rojo' : clasificacion === 'DCSA' ? 'amarillo' : 'azul'}`;
+}
+
+// ===== EVALUAR =====
+function evaluar() {
+  const apellidos = document.getElementById('apellidos').value || '';
+  const nombres = document.getElementById('nombres').value || '';
+  const cedula = document.getElementById('cedula').value || '';
+  const sexo = document.getElementById('sexo').value || '';
+  const edad = parseInt(document.getElementById('edad').value) || 0;
+  const peso = parseFloat(document.getElementById('peso').value) || 0;
+  const diasFiebre = parseInt(document.getElementById('diasFiebre').value) || 0;
+  const viaje = document.getElementById('viaje').value;
+  const hto = document.getElementById('hematocrito').value;
+  const plaquetas = document.getElementById('plaquetas').value;
+
+  const sint = getSintomas();
+  const esNino = edad > 0 && edad < 15;
+
+  let clasificacion = 'DSSA', grupo = 'A';
+  if (sint.grave.length > 0) { clasificacion = 'DG'; grupo = 'C'; }
+  else if (sint.alarma.length > 0) { clasificacion = 'DCSA'; grupo = 'B2'; }
+  else if (sint.comorbilidad.length > 0) { clasificacion = 'DSSA'; grupo = 'B1'; }
+  else { clasificacion = 'DSSA'; grupo = 'A'; }
+
+  window._clasificacion = clasificacion;
+  window._grupo = grupo;
+  window._sint = sint;
+  window._datos = { apellidos, nombres, cedula, sexo, edad, peso, diasFiebre, viaje, hto, plaquetas, esNino };
+
+  const dosisAcet = esNino && peso > 0 ? (peso*10)+'mg' : '500mg';
+  const dosisMetamizol = esNino && peso > 0 ? (peso*10)+'mg' : '500mg';
+  const volB2_1 = peso > 0 ? (peso*10).toFixed(0)+'ml' : '10ml/kg';
+  const volB2_c = peso > 0 ? (peso*5).toFixed(0)+'ml' : '5ml/kg';
+  const volC = peso > 0 ? (peso*20).toFixed(0)+'ml' : '20ml/kg';
+
+  // ---- DIAGNOSTICO ----
+  const nombre = [apellidos,nombres].filter(Boolean).join(' ') || 'Paciente';
+  const badgeClass = clasificacion==='DSSA'?'badge-dssa':clasificacion==='DCSA'?'badge-dcsa':'badge-dg';
+  const badgeLabel = clasificacion==='DSSA'?'🟢 Dengue Sin Signos de Alarma':clasificacion==='DCSA'?'🟡 Dengue Con Signos de Alarma':'🔴 Dengue Grave';
+
+  let dxHTML = '<div class="result-content animated">';
+  dxHTML += `<div class="clasificacion-badge ${badgeClass}">${badgeLabel}<span class="grupo-badge">Grupo ${grupo}</span></div>`;
+  
+  dxHTML += `<div class="result-section"><div class="result-section-title">Datos del Paciente</div>`;
+  if(nombre!='Paciente') dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--azul)"></div><b>${nombre}</b>${cedula?` — CI: ${cedula}`:''}</div>`;
+  if(edad) dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--azul)"></div>${edad} años${sexo?` · ${sexo}`:''}</div>`;
+  if(diasFiebre) dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--naranja)"></div>Fiebre de <b>${diasFiebre} días</b> de evolución</div>`;
+  if(peso) dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--azul)"></div>Peso: <b>${peso} kg</b></div>`;
+  if(hto) dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--rojo)"></div>Hematocrito: <b>${hto}%</b></div>`;
+  if(plaquetas) dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--rojo)"></div>Plaquetas: <b>${plaquetas}×10³</b></div>`;
+  dxHTML+=`</div>`;
+
+  const generalesItems = document.querySelectorAll('.sintoma-item:not(.alarma):not(.grave):not(.comorbilidad).active');
+  if(generalesItems.length>0||sint.alarma.length>0||sint.grave.length>0||sint.comorbilidad.length>0){
+    dxHTML+=`<div class="result-section"><div class="result-section-title">Hallazgos Clínicos</div>`;
+    generalesItems.forEach(i=>{ dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--verde-claro)"></div>${i.querySelector('span').textContent}</div>`; });
+    sint.alarma.forEach(s=>{ dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--rojo)"></div>⚠ ${s}</div>`; });
+    sint.grave.forEach(s=>{ dxHTML+=`<div class="result-item"><div class="result-dot" style="background:#7C3AED"></div>🚨 ${s}</div>`; });
+    sint.comorbilidad.forEach(s=>{ dxHTML+=`<div class="result-item"><div class="result-dot" style="background:var(--verde)"></div>+ ${s}</div>`; });
+    dxHTML+=`</div>`;
+  }
+
+  const hospitRec = clasificacion!=='DSSA'||sint.comorbilidad.length>0;
+  if(clasificacion==='DG') dxHTML+=`<div class="alerta-box rojo">🚨 HOSPITALIZACIÓN URGENTE EN UCI</div>`;
+  else if(clasificacion==='DCSA') dxHTML+=`<div class="alerta-box amarillo">⚠ Hospitalización en unidad de dengue requerida</div>`;
+  else if(grupo==='B1') dxHTML+=`<div class="alerta-box amarillo">📋 Posible remisión a unidad de dengue para observación</div>`;
+  else dxHTML+=`<div class="alerta-box azul">✅ Manejo ambulatorio con monitoreo cada 24–48h</div>`;
+
+  // CIE-10
+  const cie10 = clasificacion==='DG'?'A97.2 — Dengue grave':clasificacion==='DCSA'?'A97.1 — Dengue con signos de alarma':'A97.0 — Dengue sin signos de alarma';
+  dxHTML+=`<div class="trat-card morado"><div class="trat-title">📋 CIE-10</div><div class="trat-body"><b>${cie10}</b></div></div>`;
+  dxHTML+=`<div class="result-section"><div class="result-section-title">Diagnóstico diferencial a considerar</div>
+    <div class="result-item"><div class="result-dot" style="background:var(--texto-suave)"></div>COVID-19 · Zika · Chikungunya · Influenza</div>
+    <div class="result-item"><div class="result-dot" style="background:var(--texto-suave)"></div>Sarampión · Rubéola · Rickettsiosis · Paludismo</div>
+    <div class="result-item"><div class="result-dot" style="background:var(--texto-suave)"></div>Leptospirosis · Hepatitis viral · Fiebre tifoidea</div>
+  </div>`;
+  dxHTML+='</div>';
+  document.getElementById('dxContent').innerHTML = dxHTML;
+
+  // ---- TRATAMIENTO ----
+  let txHTML = '<div class="result-content animated">';
+  if(clasificacion==='DSSA'&&grupo==='A'){
+    txHTML+=`<div class="trat-card verde"><div class="trat-title">🏠 Grupo A — Tratamiento en el Hogar</div><div class="trat-body"><ul>
+      <li>Reposo absoluto en cama</li><li>Dieta normal + abundantes líquidos orales / SRO</li>
+      <li>Lienzos de agua tibia en frente</li><li>Educar sobre signos de alarma</li>
+    </ul></div></div>`;
+    txHTML+=`<div class="trat-card"><div class="trat-title">💊 Antipirético</div><div class="trat-body">
+      ${esNino?`<b>Niño:</b> Acetaminofén V.O <b>${dosisAcet}</b> cada 6h<br>o Metamizol V.O <b>${dosisMetamizol}</b> cada 6h`
+              :`<b>Adulto:</b> Acetaminofén V.O <b>500mg</b> cada 6h<br>o Metamizol V.O <b>500mg</b> cada 6h`}
+      <br><b style="color:var(--rojo)">❌ NO: AINEs, aspirina, ibuprofeno, corticoides</b>
+    </div></div>`;
+    txHTML+=`<div class="trat-card advertencia"><div class="trat-title">📅 Monitoreo</div><div class="trat-body">
+      Control cada <b>24–48 horas</b> hasta 48h después del descenso de fiebre sin antipiréticos.
+    </div></div>`;
+  } else if(clasificacion==='DSSA'&&grupo==='B1'){
+    txHTML+=`<div class="trat-card advertencia"><div class="trat-title">🏥 Grupo B1 — Remisión a Unidad de Dengue</div><div class="trat-body"><ul>
+      <li>Vigilar signos de alarma continuamente</li>
+      <li>Valoración binomio madre/hijo en gestantes</li>
+      <li>Estabilizar y manejar comorbilidades</li>
+      <li>Curva febril y balance de líquidos</li>
+      <li>Estimular ingesta de líquidos V.O</li>
+    </ul></div></div>`;
+    txHTML+=`<div class="trat-card"><div class="trat-title">💊 Antipirético</div><div class="trat-body">
+      ${esNino?`Acetaminofén V.O <b>${dosisAcet}</b> cada 6h o Metamizol V.O <b>${dosisMetamizol}</b> cada 6h`
+              :`Acetaminofén V.O <b>500mg</b> cada 6h o Metamizol V.O <b>500mg</b> cada 6h`}
+      <br><b style="color:var(--rojo)">❌ NO: AINEs, aspirina, corticoides</b>
+    </div></div>`;
+    txHTML+=`<div class="trat-card verde"><div class="trat-title">💧 Líquidos IV (si intolerancia oral)</div><div class="trat-body">
+      Lactato de Ringer o SSN 0.9%<br>
+      ${esNino?'Fórmula Holliday-Segar (pediátrico)':`2–4 ml/kg/h${peso?` = ${(peso*3).toFixed(0)}ml/h`:''}`}
+    </div></div>`;
+  } else if(clasificacion==='DCSA'){
+    const comorb = sint.comorbilidad.length>0||edad>=65;
+    txHTML+=`<div class="trat-card urgente"><div class="trat-title">🏥 Grupo B2 — Hospitalización</div><div class="trat-body">
+      Remisión inmediata a hospital o unidad de dengue. Requiere líquidos IV y monitoreo horario.
+    </div></div>`;
+    if(comorb){
+      txHTML+=`<div class="trat-card"><div class="trat-title">💧 Líquidos IV — DCSA + Comorbilidad/Adulto Mayor</div><div class="trat-body">
+        <b>1ª carga:</b> Cristaloide 5ml/kg en 1h${peso?` = <b>${volB2_c}</b>`:''}<br>
+        ✔ Mejoría → 4ml/kg/h×2-4h → 3ml/kg/h×2-4h → 2ml/kg/h×2-4h<br>
+        ✘ Sin mejoría → repetir hasta 3 cargas de 5ml/kg<br>
+        ✘ Sin respuesta → clasificar como <b>Dengue Grave (Grupo C)</b>
+      </div></div>`;
+    } else {
+      txHTML+=`<div class="trat-card"><div class="trat-title">💧 Líquidos IV — Protocolo DCSA</div><div class="trat-body">
+        <b>1ª carga:</b> Cristaloide 10ml/kg en 1h${peso?` = <b>${volB2_1}</b>`:''}<br>
+        ✔ Mejoría → 5-7ml/kg/h×2-4h → 3-5ml/kg/h×2-4h → 2-4ml/kg/h×24-48h<br>
+        ✘ Sin mejoría → repetir hasta 3 cargas de 10ml/kg<br>
+        ✘ Sin respuesta → clasificar como <b>Dengue Grave (Grupo C)</b>
+      </div></div>`;
+    }
+  } else if(clasificacion==='DG'){
+    txHTML+=`<div class="trat-card urgente"><div class="trat-title">🚨 Grupo C — UCI · URGENCIA MÁXIMA</div><div class="trat-body">
+      ABC + Oxigenoterapia. Monitoreo cada 5–30 min.
+    </div></div>`;
+    txHTML+=`<div class="trat-card urgente"><div class="trat-title">💧 Reposición — Choque Hipovolémico</div><div class="trat-body">
+      <b>Bolo 1:</b> Cristaloide 20ml/kg en 15-30min${peso?` = <b>${volC}</b>`:''}<br>
+      ✔ Mejoría → 10ml/kg/h×1-2h → 5-7ml/kg/h×4-6h → 3-5ml/kg/h×2-4h → 2-4ml/kg/h×24-48h<br>
+      ✘ Sin mejoría → 2º bolo → 3º bolo → medidas avanzadas UCI
+    </div></div>`;
+    txHTML+=`<div class="trat-card advertencia"><div class="trat-title">🔴 Choque Persistente</div><div class="trat-body"><ul>
+      <li>Función de bomba y aminas vasoactivas</li>
+      <li>Evaluar acidosis y hemorragia oculta</li>
+      <li>Considerar coloide si no responde a cristaloides</li>
+      <li>Manejo en UCI obligatorio</li>
+    </ul></div></div>`;
+  }
+
+  txHTML+=`<div class="trat-card verde"><div class="trat-title">🏠 Criterios de Alta</div><div class="trat-body">
+    <b>Clínicos:</b> Afebril ≥48h sin antipiréticos · Mejoría general · Hemodinamia normal · Sin sangrado<br>
+    <b>Lab:</b> Plaquetas en ascenso · Hematocrito estable sin IV
+  </div></div>`;
+  txHTML+='</div>';
+  document.getElementById('txContent').innerHTML = txHTML;
+
+  actualizarExamenes(clasificacion);
+
+  setTimeout(()=>{ document.getElementById('cardDx').scrollIntoView({behavior:'smooth',block:'start'}); },100);
+}
+
+function getSintomas() {
+  const items = document.querySelectorAll('.sintoma-item');
+  const r = {generales:0,alarma:[],grave:[],comorbilidad:[]};
+  items.forEach(item=>{
+    if(!item.classList.contains('active')) return;
+    const txt = item.querySelector('span').textContent;
+    if(item.classList.contains('alarma')) r.alarma.push(txt);
+    else if(item.classList.contains('grave')) r.grave.push(txt);
+    else if(item.classList.contains('comorbilidad')) r.comorbilidad.push(txt);
+    else r.generales++;
+  });
+  return r;
+}
+
+// ===== GENERAR PLANTILLA =====
+function generarPlantilla() {
+  const apellidos = document.getElementById('apellidos').value || '________________';
+  const nombres = document.getElementById('nombres').value || '________________';
+  const cedula = document.getElementById('cedula').value || '________________';
+  const sexo = document.getElementById('sexo').value || '________________';
+  const edad = document.getElementById('edad').value || '___';
+  const antecedentes = document.getElementById('antecedentes').value || '';
+  const observaciones = document.getElementById('observaciones').value || '';
+  const institucion = document.getElementById('institucion').value || 'INSTITUCIÓN DE SALUD';
+  const diasFiebre = document.getElementById('diasFiebre').value || '';
+  const ta = document.getElementById('tensionArterial').value || '';
+  const fc = document.getElementById('frecCard').value || '';
+  const fr = document.getElementById('frecResp').value || '';
+  const spo2 = document.getElementById('spo2').value || '';
+  const temp = document.getElementById('temperatura').value || '';
+  const hto = document.getElementById('hematocrito').value || '';
+  const plaquetas = document.getElementById('plaquetas').value || '';
+  const leucos = document.getElementById('leucocitos').value || '';
+
+  const clasificacion = window._clasificacion || null;
+  const grupo = window._grupo || null;
+  const sint = window._sint || {generales:0,alarma:[],grave:[],comorbilidad:[]};
+
+  // Construir cuadro clínico narrativo
+  const generalesItems = document.querySelectorAll('.sintoma-item:not(.alarma):not(.grave):not(.comorbilidad).active');
+  let sintomasList = [];
+  generalesItems.forEach(i => sintomasList.push(i.querySelector('span').textContent.toUpperCase()));
+  sint.alarma.forEach(s => sintomasList.push(s.toUpperCase()));
+  sint.grave.forEach(s => sintomasList.push(s.toUpperCase()));
+
+  const cuadroClinico = sintomasList.length > 0 
+    ? `PACIENTE DE ${edad} AÑOS DE EDAD${antecedentes ? ` CON APP DE ${antecedentes.toUpperCase()}` : ''}. ${diasFiebre ? `PRESENTA CUADRO CLÍNICO DE ${diasFiebre} DÍAS DE EVOLUCIÓN CARACTERIZADO POR ${sintomasList.join(', ')}.` : `PRESENTA: ${sintomasList.join(', ')}.`}${observaciones ? ` ${observaciones.toUpperCase()}` : ''}
+${(temp||ta||fc||fr||spo2) ? `\nSIGNOS VITALES:${temp?`\nT°: ${temp} °C`:''}${ta?`\nPA: ${ta} mmHg`:''}${fc?`\nFC: ${fc} X MIN`:''}${fr?`\nFR: ${fr} X MIN`:''}${spo2?`\nSpO₂: ${spo2}%`:''}` : ''}
+${(hto||plaquetas||leucos) ? `\nEXÁMENES DE LABORATORIO:\n${hto?`HTO: ${hto}%\n`:''}${plaquetas?`PLAQUETAS: ${plaquetas} MIL\n`:''}${leucos?`LEUCOCITOS: ${leucos} × 10³\n`:''}` : ''}`.trim()
+    : `PACIENTE DE ${edad} AÑOS DE EDAD${antecedentes ? ` CON APP DE ${antecedentes.toUpperCase()}` : ''}. ${observaciones ? observaciones.toUpperCase() : 'SIN DATOS ADICIONALES REGISTRADOS.'}`;
+
+  const dx = clasificacion 
+    ? (clasificacion==='DG' ? 'DENGUE GRAVE (A97.2)' : clasificacion==='DCSA' ? 'DENGUE CON SIGNOS DE ALARMA (A97.1)' : 'DENGUE SIN SIGNOS DE ALARMA (A97.0)')
+    : '________________';
+  const servicio = clasificacion === 'DG' ? 'Urgencias / UCI / Infectología'
+    : clasificacion === 'DCSA' ? 'Emergencia / Infectología / Medicina Interna'
+    : clasificacion === 'DSSA' ? 'Consulta Externa / Medicina General'
+    : '________________';
+
+  const today = new Date();
+  const fecha = `${today.getDate().toString().padStart(2,'0')} ${['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'][today.getMonth()]} ${today.getFullYear()}`;
+
+  const texto = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    ANEXO No. 4
+                       SOLICITUD
+             SUBSISTEMA: MSP — SIMAC-D
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fecha: ${fecha}
+
+PACIENTE:
+1.  Apellidos del/la paciente:   ${apellidos.toUpperCase()}
+2.  Nombres del/la paciente:     ${nombres.toUpperCase()}
+3.  Cédula de identidad:         ${cedula}
+4.  Sexo:                        ${sexo.toUpperCase()}
+5.  Edad:                        ${edad} AÑOS
+
+6.  Cuadro Clínico:
+${cuadroClinico}
+
+7.  Diagnóstico Principal y código CIE-10:
+    ${dx}
+    ${grupo ? `GRUPO DE INTERVENCIÓN: ${grupo}` : ''}
+
+8.  Servicio(s) solicitado(s):   ${servicio}
+
+9.  Requerimiento:
+    ${clasificacion === 'DG' ? 'SE REQUIERE UCI, HEMODERIVADOS, MONITOREO INTENSIVO' : clasificacion === 'DCSA' ? 'SE REQUIERE HOSPITALIZACIÓN, LÍQUIDOS IV, MONITOREO HORARIO' : 'SE REQUIERE EVALUACIÓN ESPECIALIZADA'}
+
+10. Sustento de la solicitud:
+    ${clasificacion === 'DG' ? 'DENGUE GRAVE CON CHOQUE — LIMITADA CAPACIDAD RESOLUTIVA. REQUIERE ATENCIÓN DE ALTA COMPLEJIDAD' : 'REQUIERE MANEJO ESPECIALIZADO SEGÚN PROTOCOLO OPS/OMS 2020'}
+
+11. Institución que deriva/remite:
+    ${institucion.toUpperCase()}
+
+12. Profesional que deriva/remite:
+    DR. RHONNIE DUARTE MORÁN, MÉDICO GENERAL
+
+13. Institución que recibe y hace la solicitud:
+    ________________________________________
+
+14. Profesional que acepta la derivación:
+    ________________________________________
+
+15. Número de caso:
+    ________________________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Generado por SIMAC-D — Sistema de Manejo Clínico del Dengue
+    Elaborado por Dr. Rhonnie Duarte M. · OPS/OMS 2020
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+  document.getElementById('plantillaContent').innerHTML = `<div class="plantilla-text">${texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  window._plantillaTexto = texto;
+}
+
+function copiarPlantilla() {
+  const texto = window._plantillaTexto || document.querySelector('.plantilla-text')?.textContent || '';
+  if(!texto) { alert('Primero genere la plantilla.'); return; }
+  navigator.clipboard.writeText(texto).then(() => {
+    const t = document.getElementById('copyToast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2500);
+  });
+}
+</script>
+</body>
+</html>
