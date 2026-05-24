@@ -6,7 +6,7 @@
 <title>SIMAC-D · Sistema de Manejo Clínico del Dengue</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;0,800;1,700&family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital@0;1&display=swap" rel="stylesheet">
 <style>:root{
 --rojo:#C1121F;--rojo-vivo:#E63946;--morado:#7B2D8B;--azul:#0077B6;--azul-claro:#00B4D8;
 --naranja:#F77F00;--verde:#2D6A4F;--verde-claro:#52B788;
@@ -19,7 +19,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--t
 .login-card{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);border:1px solid rgba(6,64,43,.5);border-radius:24px;padding:48px 44px 40px;width:420px;max-width:95vw;box-shadow:0 32px 80px rgba(0,0,0,.5);position:relative;z-index:1;text-align:center}
 .login-logo{width:110px;height:110px;border-radius:16px;background:white;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden;padding:4px}
 .login-logo img{width:100%;height:100%;object-fit:contain;border-radius:0}
-.login-app-name{font-size:2.4rem;font-weight:400;font-family:'Times New Roman',serif;background:linear-gradient(135deg,#fff 0%,#A8E6CF 50%,#fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;margin-bottom:4px}
+.login-app-name{font-size:3.6rem;font-weight:800;font-family:'EB Garamond',serif;background:linear-gradient(135deg,#fff 0%,#A8E6CF 50%,#fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;margin-bottom:4px;line-height:1}
 .login-app-subtitle{font-size:.72rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:32px}
 .login-input-group{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
 .login-input{font-family:'Montserrat',sans-serif;font-size:.88rem;padding:13px 16px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;outline:none;transition:all .2s}
@@ -39,8 +39,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--t
 .header-left{padding:16px 0;display:flex;align-items:center;gap:14px}
 .header-logo-wrap{width:62px;height:62px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);padding:3px}
 .header-logo-wrap img{width:100%;height:100%;object-fit:contain;border-radius:0}
-.header-title h1{font-size:1.1rem;font-weight:400;line-height:1.2;font-family:'Times New Roman',serif;text-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.5px}
-.header-title .simac{font-size:1.6rem;font-weight:400;letter-spacing:5px;display:block;line-height:1;font-family:'Times New Roman',serif;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.header-title h1{font-size:1rem;font-weight:600;line-height:1.2;font-family:'Montserrat',sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.3px;opacity:.9}
+.header-title .simac{font-size:2.4rem;font-weight:800;letter-spacing:2px;display:block;line-height:1;font-family:'EB Garamond',serif;text-shadow:0 2px 12px rgba(0,0,0,.5)}
 .header-title p{font-size:.68rem;font-weight:600;opacity:.75;margin-top:3px;font-family:'Source Serif 4',serif;font-style:italic}
 .header-right{background:rgba(0,0,0,.2);border-left:1px solid rgba(255,255,255,.15);padding:14px 20px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;min-width:210px}
 .header-right .ops-badge{font-size:.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;opacity:.65;margin-bottom:3px}
@@ -147,9 +147,106 @@ textarea{resize:vertical;min-height:70px}
 .plantilla-empty p{font-size:.85rem;max-width:320px;line-height:1.6}
 .copy-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E293B;color:#fff;padding:10px 24px;border-radius:30px;font-size:.82rem;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:9999}
 .copy-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.anx-doc{font-family:'Times New Roman',Georgia,serif;max-width:860px;margin:0 auto;background:#fff;border:2px solid #1a1a2e;border-radius:4px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.15)}
+.anx-header-doc{display:grid;grid-template-columns:80px 1fr 130px;background:#1a1a2e;color:#fff;gap:0}
+.anx-logo-area{display:flex;align-items:center;justify-content:center;font-family:'EB Garamond',serif;font-size:1.1rem;font-weight:800;letter-spacing:1px;padding:12px 8px;border-right:1px solid rgba(255,255,255,.2)}
+.anx-title-area{padding:12px 16px;text-align:center}
+.anx-ministerio{font-size:.62rem;font-weight:700;letter-spacing:.8px;opacity:.85;margin-bottom:4px}
+.anx-anexo{font-family:'EB Garamond',serif;font-size:1.5rem;font-weight:800;letter-spacing:3px;line-height:1}
+.anx-solicitud{font-size:.72rem;font-weight:700;letter-spacing:1.5px;margin-top:2px}
+.anx-subsistema{font-size:.6rem;opacity:.7;margin-top:4px;letter-spacing:.5px}
+.anx-fecha-area{padding:12px 10px;border-left:1px solid rgba(255,255,255,.2);font-size:.65rem;text-align:center}
+.anx-fecha-lbl{font-size:.58rem;opacity:.65;text-transform:uppercase;letter-spacing:.5px}
+.anx-fecha-val{font-size:.7rem;font-weight:700;margin-top:1px}
+.anx-caso-input{border-bottom:1px dashed rgba(255,255,255,.4);cursor:text;min-width:80px;outline:none}
+.anx-caso-input:focus{border-bottom-color:#7FFFD4;color:#7FFFD4}
+.anx-section-title{background:#eef2f7;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:6px 18px;color:#1a1a2e;border-top:1px solid #d1d9e6;border-bottom:1px solid #d1d9e6;margin-top:0}
+.anx-row{display:flex;align-items:baseline;gap:8px;padding:7px 18px;border-bottom:1px solid #eef2f7;font-size:.82rem}
+.anx-row:last-of-type{border-bottom:none}
+.anx-row-block{display:flex;align-items:flex-start;gap:8px;padding:9px 18px;border-bottom:1px solid #eef2f7;font-size:.82rem}
+.anx-num{font-weight:700;color:#1a1a2e;min-width:20px;font-size:.82rem}
+.anx-content{flex:1;line-height:1.5}
+.anx-label{font-weight:700;color:#1a1a2e;font-size:.78rem;text-transform:uppercase;letter-spacing:.3px}
+.anx-val{color:#0f172a;font-size:.84rem}
+.anx-cuadro{margin-top:6px;color:#0f172a;font-size:.82rem;line-height:1.7;background:#FAFBFC;border:1px solid #e2e8f0;border-radius:4px;padding:10px 12px;text-align:justify}
+.anx-exam-list{font-size:.72rem;color:#06402B;display:block;margin-top:4px;font-style:italic}
+.anx-blank{color:#94A3B8;font-style:italic;border-bottom:1px solid #CBD5E1;display:inline-block;min-width:200px}
+.anx-blank:focus{outline:none;border-bottom-color:#0077B6;color:#0f172a}
+.anx-row-double{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #eef2f7}
+.anx-row-half{padding:7px 18px;font-size:.82rem;display:flex;align-items:baseline;gap:8px}
+.anx-row-half:first-child{border-right:1px solid #eef2f7}
+.anx-firmas{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:2px solid #1a1a2e;margin-top:8px}
+.anx-firma{padding:20px 24px 16px;text-align:center;border-right:1px solid #d1d9e6}
+.anx-firma:last-child{border-right:none}
+.anx-firma-line{border-top:1.5px solid #1a1a2e;width:200px;margin:0 auto 6px}
+.anx-firma-nombre{font-size:.78rem;font-weight:700;color:#1a1a2e;letter-spacing:.3px}
+.anx-firma-cargo{font-size:.65rem;color:#64748B;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.anx-firma-inst{font-size:.62rem;color:#94A3B8;font-style:italic;margin-top:2px}
+.anx-footer-doc{text-align:center;font-size:.6rem;color:#94A3B8;padding:8px 16px;border-top:1px solid #eef2f7;background:#FAFBFC;font-style:italic}
 .footer{text-align:center;padding:14px;font-size:.65rem;color:var(--texto-suave);border-top:1px solid var(--gris-borde);background:#fff}
+@media print{.anx-doc{box-shadow:none;border:1px solid #000}.tabs-bar,.header,.footer,.plantilla-header,.plantilla-actions{display:none!important}.plantilla-body{padding:0}.tab-panel{display:block!important}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .animated{animation:fadeIn .35s ease}
+.card-header.hidra{background:linear-gradient(90deg,#EFF6FF,#DBEAFE)}
+.card-icon.hidra{background:#0077B6;color:#fff}
+.card-header.balance{background:linear-gradient(90deg,#F0FDF4,#DCFCE7)}
+.card-icon.balance{background:#2D6A4F;color:#fff}
+.card-header.diuresis{background:linear-gradient(90deg,#FFF7ED,#FFEDD5)}
+.card-icon.diuresis{background:#F77F00;color:#fff}
+.hid-main{max-width:1200px;margin:24px auto;padding:0 16px 60px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.hid-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.hid-stat{background:var(--gris-bg);border-radius:10px;padding:12px 14px;text-align:center;border:2px solid transparent;transition:border-color .2s}
+.hid-stat.ok{border-color:#52B788;background:#F0FDF4}
+.hid-stat.warn{border-color:#F77F00;background:#FFFBEB}
+.hid-stat.danger{border-color:#C1121F;background:#FFF1F2}
+.hid-stat-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:4px}
+.hid-stat-val{font-size:1.4rem;font-weight:800;color:var(--texto);line-height:1}
+.hid-stat-unit{font-size:.65rem;color:var(--texto-suave);margin-top:2px}
+.hid-stat-interp{font-size:.65rem;font-weight:700;margin-top:4px}
+.hid-stat.ok .hid-stat-interp{color:#166534}
+.hid-stat.warn .hid-stat-interp{color:#854D0E}
+.hid-stat.danger .hid-stat-interp{color:#9F1239}
+.hid-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed #E2E8F0}
+.hid-row:last-child{border-bottom:none}
+.hid-row-label{font-size:.73rem;font-weight:600;flex:1;color:var(--texto)}
+.hid-row-input{width:110px;text-align:right}
+.hid-row-unit{font-size:.68rem;color:var(--texto-suave);width:36px;text-align:left}
+.hid-row-btn{background:none;border:none;cursor:pointer;font-size:.8rem;padding:2px 5px;border-radius:5px;transition:background .15s}
+.hid-row-btn:hover{background:#E2E8F0}
+.diuresis-table{width:100%;border-collapse:collapse;font-size:.76rem}
+.diuresis-table th{background:var(--gris-bg);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;color:var(--texto-suave);border-bottom:2px solid var(--gris-borde)}
+.diuresis-table td{padding:7px 10px;border-bottom:1px dashed #E2E8F0;vertical-align:middle}
+.diuresis-table tr:last-child td{border-bottom:none}
+.diuresis-table tr:hover td{background:#F8FAFC}
+.du-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.62rem;font-weight:700}
+.du-badge.ok{background:#DCFCE7;color:#166534}
+.du-badge.warn{background:#FEF9C3;color:#854D0E}
+.du-badge.danger{background:#FFE4E6;color:#9F1239}
+.du-badge.oligo{background:#FFE4E6;color:#9F1239}
+.du-badge.bajo{background:#FEF9C3;color:#854D0E}
+.du-badge.norm{background:#DCFCE7;color:#166534}
+.du-badge.poliuria{background:#EFF6FF;color:#1E40AF}
+.btn-add-diuresis{width:100%;padding:9px;background:linear-gradient(135deg,#06402B,#085c3a);color:#fff;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:10px}
+.btn-add-diuresis:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.btn-reset-hid{padding:7px 14px;background:var(--gris-bg);border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'Montserrat',sans-serif;font-size:.72rem;font-weight:700;color:var(--texto-suave);cursor:pointer;transition:all .2s}
+.btn-reset-hid:hover{background:#FFE4E6;border-color:#FECDD3;color:#9F1239}
+.balance-barra-wrap{height:10px;background:#E2E8F0;border-radius:10px;overflow:hidden;margin:8px 0 4px}
+.balance-barra{height:100%;border-radius:10px;transition:width .5s}
+.balance-positivo{background:linear-gradient(90deg,#52B788,#2D6A4F)}
+.balance-negativo{background:linear-gradient(90deg,#E63946,#C1121F)}
+.balance-neutro{background:#94A3B8}
+.flujo-input-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
+.hid-meta-box{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #BFDBFE;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.hid-meta-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1E40AF;margin-bottom:8px}
+.hid-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hid-meta-item{text-align:center}
+.hid-meta-val{font-size:1rem;font-weight:800;color:#1E40AF}
+.hid-meta-lbl{font-size:.6rem;color:#3B82F6;text-transform:uppercase;letter-spacing:.3px}
+@media(max-width:720px){
+.hid-main{grid-template-columns:1fr}
+.hid-stat-grid{grid-template-columns:1fr 1fr}
+.flujo-input-row{grid-template-columns:1fr 1fr}
+}
 @media(max-width:720px){
 .main{grid-template-columns:1fr}
 .card.full{grid-column:1}
@@ -206,6 +303,7 @@ textarea{resize:vertical;min-height:70px}
  <div class="tabs-inner">
  <div class="tab active" onclick="showTab('tabPaciente',this)"><span class="tab-icon">📋</span>Evaluación Clínica</div>
  <div class="tab" onclick="showTab('tabExamenes',this)"><span class="tab-icon">🔬</span>Exámenes</div>
+ <div class="tab" onclick="showTab('tabHidratacion',this)"><span class="tab-icon">💧</span>Hidratación</div>
  <div class="tab" onclick="showTab('tabPlantilla',this)"><span class="tab-icon">📄</span>Plantilla / Solicitud</div>
  </div>
  </div>
@@ -295,13 +393,264 @@ textarea{resize:vertical;min-height:70px}
  </div>
  </div>
 
+ <div id="tabHidratacion" class="tab-panel">
+ <div class="hid-main">
+
+ <!-- COLUMNA IZQUIERDA -->
+ <div style="display:flex;flex-direction:column;gap:18px">
+
+  <!-- DATOS BASE -->
+  <div class="card">
+   <div class="card-header hidra">
+    <div class="card-icon hidra">⚖️</div>
+    <h2>Parámetros del Paciente</h2>
+    <span class="numero">Base</span>
+   </div>
+   <div class="card-body">
+    <div class="hid-meta-box" id="hidMetaBox">
+     <div class="hid-meta-title">🎯 Metas de Hidratación (OPS/OMS 2020)</div>
+     <div class="hid-meta-grid">
+      <div class="hid-meta-item"><div class="hid-meta-val" id="metaMinVol">—</div><div class="hid-meta-lbl">mL/día mín</div></div>
+      <div class="hid-meta-item"><div class="hid-meta-val" id="metaMaxVol">—</div><div class="hid-meta-lbl">mL/día máx</div></div>
+      <div class="hid-meta-item"><div class="hid-meta-val" id="metaDiuresisMin">—</div><div class="hid-meta-lbl">mL/h diuresis</div></div>
+     </div>
+    </div>
+    <div class="form-grid">
+     <div class="form-group"><label>Peso (kg)</label><input type="number" id="hidPeso" placeholder="kg" min="1" max="300" oninput="calcHidMetas()"></div>
+     <div class="form-group"><label>Clasificación</label>
+      <select id="hidClase" onchange="calcHidMetas()">
+       <option value="DSSA">DSSA — Sin alarma</option>
+       <option value="DCSA">DCSA — Con alarma</option>
+       <option value="DG">DG — Grave / UCI</option>
+      </select>
+     </div>
+     <div class="form-group"><label>Fecha inicio seguim.</label><input type="date" id="hidFecha"></div>
+     <div class="form-group"><label>Hora inicio</label><input type="time" id="hidHora"></div>
+    </div>
+   </div>
+  </div>
+
+  <!-- INGRESOS -->
+  <div class="card">
+   <div class="card-header hidra">
+    <div class="card-icon hidra">➕</div>
+    <h2>Ingresos Hídricos</h2>
+    <span class="numero" id="totalIngresosLabel">0 mL</span>
+   </div>
+   <div class="card-body">
+    <div id="ingresosRows">
+     <div class="hid-row">
+      <span class="hid-row-label">💧 Vía oral (agua / SRO)</span>
+      <input class="hid-row-input" type="number" id="ing_oral" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🧴 SS 0.9% / Ringer Lactato IV</span>
+      <input class="hid-row-input" type="number" id="ing_ss" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🩸 Hemoderivados / plasma</span>
+      <input class="hid-row-input" type="number" id="ing_hemo" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">💊 Medicamentos IV</span>
+      <input class="hid-row-input" type="number" id="ing_med" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🍽️ Alimentación / nutrición</span>
+      <input class="hid-row-input" type="number" id="ing_alim" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">➕ Otros ingresos</span>
+      <input class="hid-row-input" type="number" id="ing_otros" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <!-- EGRESOS -->
+  <div class="card">
+   <div class="card-header diuresis">
+    <div class="card-icon diuresis">➖</div>
+    <h2>Egresos Hídricos</h2>
+    <span class="numero" id="totalEgresosLabel">0 mL</span>
+   </div>
+   <div class="card-body">
+    <div id="egresosRows">
+     <div class="hid-row">
+      <span class="hid-row-label">🚽 Diuresis total (orina)</span>
+      <input class="hid-row-input" type="number" id="egr_orina" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🤢 Vómitos</span>
+      <input class="hid-row-input" type="number" id="egr_vomito" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">💩 Diarrea</span>
+      <input class="hid-row-input" type="number" id="egr_diarrea" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🩹 Drenajes / SNG</span>
+      <input class="hid-row-input" type="number" id="egr_drenaje" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">🌡️ Pérdidas insensibles (est.)</span>
+      <input class="hid-row-input" type="number" id="egr_insens" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+     <div class="hid-row">
+      <span class="hid-row-label">➖ Otros egresos</span>
+      <input class="hid-row-input" type="number" id="egr_otros" value="0" min="0" oninput="calcBalance()">
+      <span class="hid-row-unit">mL</span>
+     </div>
+    </div>
+    <div style="margin-top:10px;padding:8px 12px;background:#FFF7ED;border-radius:8px;font-size:.7rem;color:#92400E;border-left:3px solid #F77F00">
+     💡 Pérdidas insensibles estimadas: <b>~10 mL/kg/día</b> (fiebre suma ~2–3 mL/kg por cada °C sobre 37°C)
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <!-- COLUMNA DERECHA -->
+ <div style="display:flex;flex-direction:column;gap:18px">
+
+  <!-- BALANCE HÍDRICO TOTAL -->
+  <div class="card">
+   <div class="card-header balance">
+    <div class="card-icon balance">⚖️</div>
+    <h2>Balance Hídrico</h2>
+    <span class="numero">24h</span>
+   </div>
+   <div class="card-body">
+    <div class="hid-stat-grid" id="balanceStats">
+     <div class="hid-stat" id="statIngresos">
+      <div class="hid-stat-label">Total Ingresos</div>
+      <div class="hid-stat-val" id="valIngresos">0</div>
+      <div class="hid-stat-unit">mL / 24h</div>
+     </div>
+     <div class="hid-stat" id="statEgresos">
+      <div class="hid-stat-label">Total Egresos</div>
+      <div class="hid-stat-val" id="valEgresos">0</div>
+      <div class="hid-stat-unit">mL / 24h</div>
+     </div>
+     <div class="hid-stat" id="statBalance" style="grid-column:1/-1">
+      <div class="hid-stat-label">Balance Neto</div>
+      <div class="hid-stat-val" id="valBalance">0</div>
+      <div class="hid-stat-unit">mL</div>
+      <div class="hid-stat-interp" id="interpBalance">—</div>
+      <div class="balance-barra-wrap"><div class="balance-barra balance-neutro" id="barraBal" style="width:50%"></div></div>
+     </div>
+    </div>
+    <div id="alertaBalance"></div>
+   </div>
+  </div>
+
+  <!-- VOLUMEN URINARIO Y GASTO URINARIO -->
+  <div class="card">
+   <div class="card-header diuresis">
+    <div class="card-icon diuresis">🚽</div>
+    <h2>Gasto Urinario</h2>
+    <span class="numero">Cálculo automático</span>
+   </div>
+   <div class="card-body">
+    <div class="form-grid" style="margin-bottom:14px">
+     <div class="form-group">
+      <label>Volumen urinario total (mL)</label>
+      <input type="number" id="guVolumen" placeholder="mL en el período" min="0" oninput="calcGastoUrinario()">
+     </div>
+     <div class="form-group">
+      <label>Período de medición (horas)</label>
+      <input type="number" id="guHoras" placeholder="horas" value="24" min="0.5" step="0.5" oninput="calcGastoUrinario()">
+     </div>
+    </div>
+    <div class="hid-stat-grid">
+     <div class="hid-stat" id="statGuMlH">
+      <div class="hid-stat-label">Gasto Urinario</div>
+      <div class="hid-stat-val" id="valGuMlH">—</div>
+      <div class="hid-stat-unit">mL / hora</div>
+      <div class="hid-stat-interp" id="interpGuMlH">Ingrese datos</div>
+     </div>
+     <div class="hid-stat" id="statGuMlKgH">
+      <div class="hid-stat-label">Gasto Urinario</div>
+      <div class="hid-stat-val" id="valGuMlKgH">—</div>
+      <div class="hid-stat-unit">mL / kg / hora</div>
+      <div class="hid-stat-interp" id="interpGuMlKgH">Requiere peso</div>
+     </div>
+    </div>
+    <div id="alertaGU" style="margin-top:10px"></div>
+    <div style="margin-top:10px;background:#F0FDF4;border-radius:8px;padding:10px 13px;font-size:.7rem;color:#166534;border-left:3px solid #52B788">
+     <b>Meta OPS/OMS:</b> Gasto urinario <b>0.5 – 1 mL/kg/hora</b><br>
+     <span style="color:#854D0E">⚠ Oliguria: &lt; 0.5 mL/kg/h · Anuria: &lt; 0.1 mL/kg/h</span><br>
+     <span style="color:#1E40AF">🔵 Poliuria: &gt; 2 mL/kg/h (fase recuperación)</span>
+    </div>
+   </div>
+  </div>
+
+  <!-- REGISTRO HORARIO DE DIURESIS -->
+  <div class="card">
+   <div class="card-header diuresis">
+    <div class="card-icon diuresis">🕐</div>
+    <h2>Registro Horario de Diuresis</h2>
+    <span class="numero" id="regCount">0 registros</span>
+   </div>
+   <div class="card-body">
+    <div class="flujo-input-row">
+     <div class="form-group">
+      <label>Hora</label>
+      <input type="time" id="regHora">
+     </div>
+     <div class="form-group">
+      <label>Volumen (mL)</label>
+      <input type="number" id="regVolumen" placeholder="mL" min="0">
+     </div>
+     <div class="form-group" style="justify-content:flex-end">
+      <label>&nbsp;</label>
+      <button class="btn-add-diuresis" onclick="addRegistro()">➕ Agregar</button>
+     </div>
+    </div>
+    <div style="overflow-x:auto">
+     <table class="diuresis-table">
+      <thead>
+       <tr>
+        <th>Hora</th>
+        <th>Volumen (mL)</th>
+        <th>GU (mL/kg/h)</th>
+        <th>Interpretación</th>
+        <th></th>
+       </tr>
+      </thead>
+      <tbody id="registrosTbody">
+       <tr id="regEmptyRow"><td colspan="5" style="text-align:center;color:var(--texto-suave);padding:20px;font-size:.75rem">No hay registros aún. Ingrese hora y volumen para comenzar.</td></tr>
+      </tbody>
+     </table>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+     <div id="regResumen" style="font-size:.72rem;color:var(--texto-suave)"></div>
+     <button class="btn-reset-hid" onclick="clearRegistros()">🗑 Limpiar registros</button>
+    </div>
+   </div>
+  </div>
+
+ </div>
+ </div>
+ </div>
+
  <div id="tabPlantilla" class="tab-panel">
  <div class="plantilla-main">
  <div class="plantilla-container">
  <div class="plantilla-header">
  <div>
- <h2>📄 Plantilla Clínica / Solicitud de Exámenes</h2>
- <p>Generada automáticamente según la evaluación del paciente</p>
+ <h2>📋 ANEXO No. 4 — Solicitud / Referencia de Paciente</h2>
+ <p>Ministerio de Salud Pública · SUBSISTEMA MSP · Generada automáticamente</p>
  </div>
  <div class="plantilla-actions">
  <button class="btn-copy" onclick="copyPlantilla()">📋 Copiar texto</button>
@@ -311,8 +660,8 @@ textarea{resize:vertical;min-height:70px}
  <div class="plantilla-body">
  <div id="plantillaContent">
  <div class="plantilla-empty">
- <div class="icon">📄</div>
- <p>La plantilla clínica se generará automáticamente cuando complete la evaluación del paciente y presione <b>"Generar Diagnóstico y Tratamiento"</b></p>
+ <div class="icon">📋</div>
+ <p>El <b>Anexo No. 4</b> se generará automáticamente al completar la evaluación clínica y presionar <b>"Generar Diagnóstico y Tratamiento"</b></p>
  </div>
  </div>
  </div>
@@ -577,68 +926,135 @@ rec.innerHTML=`<b>${labels[clase]}</b> — Exámenes marcados automáticamente s
 }
 }
 function renderPlantilla(clase,grales,alarmas,graves,comorbilidades,peso,plaq,hema,spo2,dias){
-const nombre=`${val("apellidos")} ${val("nombres")}`.trim()||"Paciente no especificado";
-const fecha=new Date().toLocaleDateString("es-EC",{day:"2-digit",month:"long",year:"numeric"});
+const apellidos=(val("apellidos")||"").toUpperCase()||"—";
+const nombres=(val("nombres")||"").toUpperCase()||"—";
+const cedula=val("cedula")||"—";
+const sexo=(val("sexo")||"—").toUpperCase();
+const edad=val("edad")?val("edad")+" AÑOS":"—";
+const inst=(val("institucion")||"INSTITUCIÓN DE SALUD").toUpperCase();
+const fecha=new Date().toLocaleDateString("es-EC",{day:"2-digit",month:"long",year:"numeric"}).toUpperCase();
 const hora=new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"});
-const clasLabel={DSSA:"DENGUE SIN SIGNOS DE ALARMA",DCSA:"DENGUE CON SIGNOS DE ALARMA",DG:"DENGUE GRAVE"};
-const inst=val("institucion")||"Institución de Salud";
-const examActivos=[...document.querySelectorAll(".exam-item.active")].map(el=>el.querySelector("span").textContent.trim());
-let txt=`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SIMAC-D · SISTEMA DE MANEJO CLÍNICO DEL DENGUE
-${inst}
-Fecha: ${fecha} · Hora: ${hora}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DATOS DEL PACIENTE
-Nombre: ${nombre}
-${val("cedula")?"Cédula: "+val("cedula")+("\n"):""}${val("edad")?"Edad: "+val("edad")+" años":""}${val("sexo")?" · Sexo: "+val("sexo"):""}
-${val("peso")?"Peso: "+val("peso")+" kg":""}${val("diasFiebre")?" · Días de fiebre: "+val("diasFiebre"):""}
-SIGNOS VITALES
-${val("temperatura")?"Temperatura: "+val("temperatura")+"°C":""}${val("tensionArterial")?" · T.A: "+val("tensionArterial")+" mmHg":""}
-${val("frecCard")?"FC: "+val("frecCard")+" x/min":""}${val("frecResp")?" · FR: "+val("frecResp")+" x/min":""}${val("spo2")?" · SpO₂: "+val("spo2")+"%":""}
-LABORATORIO
-${val("hematocrito")?"Hematocrito: "+val("hematocrito")+"%":""}${val("plaquetas")?" · Plaquetas: "+val("plaquetas")+"×10³":""}${val("leucocitos")?" · Leucocitos: "+val("leucocitos")+"×10³":""}
-CLASIFICACIÓN DIAGNÓSTICA
-▶ ${clasLabel[clase]}`;
-if(grales.length)txt+=`
-Síntomas generales:
-${grales.map(x=>" • "+x).join("\n")}`;
-if(alarmas.length)txt+=`
-Signos de alarma:
-${alarmas.map(x=>" ⚠ "+x).join("\n")}`;
-if(graves.length)txt+=`
-Signos de gravedad:
-${graves.map(x=>" 🚨 "+x).join("\n")}`;
-if(comorbilidades.length)txt+=`
-Comorbilidades:
-${comorbilidades.map(x=>" + "+x).join("\n")}`;
-if(val("antecedentes"))txt+=`
-ANTECEDENTES
-${val("antecedentes")}`;
-if(val("observaciones"))txt+=`
-OBSERVACIONES CLÍNICAS
-${val("observaciones")}`;
-if(examActivos.length){
-txt+=`
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SOLICITUD DE EXÁMENES COMPLEMENTARIOS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${examActivos.map((x,i)=>`${i+1}. ${x}`).join("\n")}`;
-}
-const condRec={DSSA:"Manejo ambulatorio con control en 24–48h",DCSA:"HOSPITALIZACIÓN — Hidratación IV y monitoreo estricto",DG:"UCI / TERAPIA INTENSIVA — Manejo multidisciplinario urgente"};
-txt+=`
-CONDUCTA
-${condRec[clase]}`;
-txt+=`
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Basado en: OPS/OMS · Guía Dengue 2020
-Elaborado con SIMAC-D · Dr. Rhonnie Duarte M.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-document.getElementById("plantillaContent").innerHTML=`<div class="plantilla-text">${txt.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`;
+const clasLabel={DSSA:"DENGUE SIN SIGNOS DE ALARMA (CIE-10: A97.0)",DCSA:"DENGUE CON SIGNOS DE ALARMA (CIE-10: A97.1)",DG:"DENGUE GRAVE (CIE-10: A97.2)"};
+const servicio={DSSA:"Consulta Externa / Medicina General",DCSA:"Hospitalización / Infectología",DG:"Emergencia / UCI / Infectología"};
+const conducta={DSSA:"MANEJO AMBULATORIO CON CONTROL EN 24–48 HORAS",DCSA:"HOSPITALIZACIÓN — HIDRATACIÓN IV Y MONITOREO ESTRICTO",DG:"UCI / TERAPIA INTENSIVA — MANEJO MULTIDISCIPLINARIO URGENTE"};
+const requerimiento={DSSA:"SEGUIMIENTO AMBULATORIO Y CONTROL DE LABORATORIO",DCSA:"CAMA DE HOSPITALIZACIÓN Y MONITOREO DE LABORATORIO",DG:"UNIDAD DE CUIDADOS INTENSIVOS (UCI) Y MANEJO ESPECIALIZADO"};
+// Build cuadro clinico text
+let cuadroArr=[];
+if(val("diasFiebre"))cuadroArr.push(`PACIENTE DE ${edad} DE EDAD`);
+if(val("antecedentes"))cuadroArr.push(`CON APP: ${val("antecedentes").toUpperCase()}`);
+const sintomasTxt=[...grales,...alarmas,...graves].map(x=>x.toUpperCase()).join(", ");
+if(sintomasTxt)cuadroArr.push(`PRESENTA: ${sintomasTxt}`);
+if(val("diasFiebre"))cuadroArr.push(`CUADRO CLÍNICO DE ${val("diasFiebre")} DÍAS DE EVOLUCIÓN`);
+if(val("observaciones"))cuadroArr.push(val("observaciones").toUpperCase());
+const svArr=[];
+if(val("temperatura"))svArr.push(`T°: ${val("temperatura")}°C`);
+if(val("tensionArterial"))svArr.push(`PA: ${val("tensionArterial")} MMHG`);
+if(val("frecCard"))svArr.push(`FC: ${val("frecCard")} X MIN`);
+if(val("frecResp"))svArr.push(`FR: ${val("frecResp")} X MIN`);
+if(val("spo2"))svArr.push(`SPO2: ${val("spo2")}%`);
+const labArr=[];
+if(hema)labArr.push(`HTO: ${hema}%`);
+if(val("leucocitos"))labArr.push(`LEUC: ${val("leucocitos")}×10³`);
+if(plaq)labArr.push(`PLAQUETAS: ${plaq} MIL`);
+const examActivos=[...document.querySelectorAll(".exam-item.active")].map(el=>el.querySelector("span").textContent.trim().toUpperCase());
+// Build HTML formatted document
+const row=(n,label,content)=>`
+<div class="anx-row">
+<div class="anx-num">${n}.</div>
+<div class="anx-content"><span class="anx-label">${label}:</span> <span class="anx-val">${content}</span></div>
+</div>`;
+let html=`
+<div class="anx-doc">
+<div class="anx-header-doc">
+<div class="anx-logo-area">SIMAC-D</div>
+<div class="anx-title-area">
+<div class="anx-ministerio">MINISTERIO DE SALUD PÚBLICA DEL ECUADOR</div>
+<div class="anx-anexo">ANEXO No. 4</div>
+<div class="anx-solicitud">SOLICITUD / REFERENCIA DE PACIENTE</div>
+<div class="anx-subsistema">SUBSISTEMA: MSP</div>
+</div>
+<div class="anx-fecha-area">
+<div class="anx-fecha-lbl">Fecha</div>
+<div class="anx-fecha-val">${fecha}</div>
+<div class="anx-fecha-lbl" style="margin-top:6px">Hora</div>
+<div class="anx-fecha-val">${hora}</div>
+<div class="anx-fecha-lbl" style="margin-top:6px">No. Caso</div>
+<div class="anx-fecha-val anx-caso-input" id="nroCaso" contenteditable="true" title="Haga clic para editar">_____________</div>
+</div>
+</div>
+<div class="anx-section-title">DATOS DEL PACIENTE</div>
+${row(1,"Apellidos del / la paciente",apellidos)}
+${row(2,"Nombres del / la paciente",nombres)}
+${row(3,"Cédula de identidad",cedula)}
+${row(4,"Sexo",sexo)}
+${row(5,"Edad",edad)}
+<div class="anx-row anx-row-block">
+<div class="anx-num">6.</div>
+<div class="anx-content">
+<span class="anx-label">Cuadro Clínico:</span>
+<div class="anx-cuadro">
+${cuadroArr.length?cuadroArr.join(". ")+".":`PACIENTE CON CUADRO CLÍNICO COMPATIBLE CON DENGUE DE ${dias||"?"} DÍAS DE EVOLUCIÓN.`}
+${svArr.length?`<br><br><b>SIGNOS VITALES:</b> ${svArr.join(" · ")}`:``}
+${labArr.length?`<br><b>LABORATORIO:</b> ${labArr.join(" · ")}`:``}
+${comorbilidades.length?`<br><b>COMORBILIDADES:</b> ${comorbilidades.map(x=>x.toUpperCase()).join(", ")}`:``}
+${alarmas.length?`<br><b>SIGNOS DE ALARMA:</b> ${alarmas.map(x=>x.toUpperCase()).join(", ")}`:``}
+${graves.length?`<br><b>SIGNOS DE GRAVEDAD:</b> ${graves.map(x=>x.toUpperCase()).join(", ")}`:``}
+</div>
+</div>
+</div>
+${row(7,"Diagnóstico principal y código CIE-10",clasLabel[clase])}
+${row(8,"Servicio(s) solicitado(s)",servicio[clase])}
+${row(9,"Requerimiento",requerimiento[clase]+(examActivos.length?`<br><span class="anx-exam-list">EXÁMENES SOLICITADOS: ${examActivos.join(" · ")}</span>`:""))}
+${row(10,"Sustento de la solicitud",clase==="DSSA"?"SEGUIMIENTO Y CONFIRMACIÓN DIAGNÓSTICA":clase==="DCSA"?"CAPACIDAD RESOLUTIVA LIMITADA — REQUIERE HOSPITALIZACIÓN Y MANEJO ESPECIALIZADO":"LIMITADA CAPACIDAD RESOLUTIVA — REQUIERE UCI Y MANEJO MULTIDISCIPLINARIO")}
+<div class="anx-section-title">INSTITUCIÓN Y PROFESIONAL</div>
+${row(11,"Institución que deriva / remite",inst)}
+${row(12,"Profesional que deriva / remite","DR. RHONNIE DUARTE MORÁN, MÉDICO GENERAL")}
+<div class="anx-row-double">
+<div class="anx-row-half">
+${row(13,"Institución que recibe / acepta","<span class='anx-blank'>________________________________________________</span>")}
+</div>
+<div class="anx-row-half">
+${row(14,"Profesional que acepta la derivación","<span class='anx-blank'>________________________________________________</span>")}
+</div>
+</div>
+${row(15,"Número de caso","<span class='anx-blank' id='nroCaso2' contenteditable='true' title='Haga clic para editar'>_____________________</span>")}
+<div class="anx-firmas">
+<div class="anx-firma">
+<div class="anx-firma-line"></div>
+<div class="anx-firma-nombre">DR. RHONNIE DUARTE MORÁN</div>
+<div class="anx-firma-cargo">MÉDICO GENERAL</div>
+<div class="anx-firma-inst">${inst}</div>
+</div>
+<div class="anx-firma">
+<div class="anx-firma-line"></div>
+<div class="anx-firma-nombre">_______________________________</div>
+<div class="anx-firma-cargo">MÉDICO QUE ACEPTA / RECIBE</div>
+<div class="anx-firma-inst">INSTITUCIÓN RECEPTORA</div>
+</div>
+</div>
+<div class="anx-footer-doc">
+Generado por SIMAC-D · Sistema de Manejo Clínico del Dengue · Dr. Rhonnie Duarte M. · Basado en OPS/OMS 2020
+</div>
+</div>`;
+document.getElementById("plantillaContent").innerHTML=html;
 }
 function copyPlantilla(){
-const el=document.querySelector(".plantilla-text");
-if(!el){alert("Primero genere el diagnóstico.");return;}
-navigator.clipboard.writeText(el.innerText).then(()=>{
+const el=document.getElementById("plantillaContent");
+if(!el||el.querySelector(".plantilla-empty")){alert("Primero genere el diagnóstico.");return;}
+// Build clean text from the structured document
+const rows=[...el.querySelectorAll(".anx-row, .anx-row-block, .anx-row-half")];
+let txt="MINISTERIO DE SALUD PÚBLICA DEL ECUADOR\nANEXO No. 4 — SOLICITUD / REFERENCIA DE PACIENTE\nSUBSISTEMA: MSP\n\n";
+rows.forEach(r=>{
+const num=r.querySelector(".anx-num")?.textContent||"";
+const label=r.querySelector(".anx-label")?.textContent||"";
+const val=r.querySelector(".anx-val,.anx-cuadro")?.innerText||"";
+if(num||label)txt+=`${num} ${label} ${val}\n`;
+});
+const firmas=[...el.querySelectorAll(".anx-firma-nombre")];
+txt+="\n\nFIRMAS:\n";
+firmas.forEach(f=>txt+=f.textContent+"\n");
+txt+="\n\nGenerado por SIMAC-D · Dr. Rhonnie Duarte M. · OPS/OMS 2020";
+navigator.clipboard.writeText(txt).then(()=>{
 const t=document.getElementById("copyToast");
 t.classList.add("show");
 setTimeout(()=>t.classList.remove("show"),2500);
@@ -652,10 +1068,210 @@ const svg="data:image/svg+xml;charset=utf-8,%3Csvg%20version=%221.2%22%20xmlns=%
 document.getElementById("loginLogoImg").src=svg;
 document.getElementById("appLogoImg").src=svg;
 }
+// ── HIDRATACIÓN ────────────────────────────────────────────────────────────
+let registros=[];
+
+function calcHidMetas(){
+  const peso=parseFloat(document.getElementById("hidPeso").value)||0;
+  const clase=document.getElementById("hidClase").value;
+  if(!peso){
+    ["metaMinVol","metaMaxVol","metaDiuresisMin"].forEach(id=>document.getElementById(id).textContent="—");
+    return;
+  }
+  let minVol,maxVol,duMin;
+  if(clase==="DSSA"){
+    minVol=Math.round(peso*40);maxVol=Math.round(peso*60);duMin=Math.round(peso*0.5*10)/10;
+  }else if(clase==="DCSA"){
+    minVol=Math.round(peso*50);maxVol=Math.round(peso*80);duMin=Math.round(peso*0.5*10)/10;
+  }else{
+    minVol=Math.round(peso*60);maxVol=Math.round(peso*100);duMin=Math.round(peso*0.5*10)/10;
+  }
+  document.getElementById("metaMinVol").textContent=minVol.toLocaleString();
+  document.getElementById("metaMaxVol").textContent=maxVol.toLocaleString();
+  document.getElementById("metaDiuresisMin").textContent=">"+duMin;
+  // Also update insensible losses estimate
+  const insens=document.getElementById("egr_insens");
+  if(insens&&(!insens.value||insens.value==="0"))insens.value=Math.round(peso*10);
+  calcBalance();
+}
+
+function calcBalance(){
+  const ids_ing=["ing_oral","ing_ss","ing_hemo","ing_med","ing_alim","ing_otros"];
+  const ids_egr=["egr_orina","egr_vomito","egr_diarrea","egr_drenaje","egr_insens","egr_otros"];
+  const ing=ids_ing.reduce((s,id)=>s+(parseFloat(document.getElementById(id)?.value)||0),0);
+  const egr=ids_egr.reduce((s,id)=>s+(parseFloat(document.getElementById(id)?.value)||0),0);
+  const bal=ing-egr;
+  document.getElementById("valIngresos").textContent=ing.toLocaleString();
+  document.getElementById("valEgresos").textContent=egr.toLocaleString();
+  document.getElementById("valBalance").textContent=(bal>=0?"+":"")+bal.toLocaleString();
+  document.getElementById("totalIngresosLabel").textContent=ing.toLocaleString()+" mL";
+  document.getElementById("totalEgresosLabel").textContent=egr.toLocaleString()+" mL";
+  // Color and interpretation
+  const sBal=document.getElementById("statBalance");
+  const iB=document.getElementById("interpBalance");
+  const barra=document.getElementById("barraBal");
+  const pct=ing+egr>0?Math.min(100,Math.round((ing/(ing+egr))*100)):50;
+  barra.style.width=pct+"%";
+  if(bal>500){
+    sBal.className="hid-stat warn";barra.className="balance-barra balance-positivo";
+    iB.textContent="Balance positivo — Vigilar sobrecarga";
+  }else if(bal<-300){
+    sBal.className="hid-stat danger";barra.className="balance-barra balance-negativo";
+    iB.textContent="Balance negativo — Riesgo de deshidratación";
+  }else if(bal>=0){
+    sBal.className="hid-stat ok";barra.className="balance-barra balance-positivo";
+    iB.textContent="Balance adecuado ✓";
+  }else{
+    sBal.className="hid-stat ok";barra.className="balance-barra balance-neutro";
+    iB.textContent="Balance levemente negativo";
+  }
+  // Alerta
+  const aB=document.getElementById("alertaBalance");
+  if(bal>1000){
+    aB.innerHTML=`<div class="alerta-box amarillo">⚠ Balance muy positivo (+${bal.toLocaleString()} mL). Vigilar signos de sobrecarga hídrica: edema, disnea, crepitantes.</div>`;
+  }else if(bal<-500){
+    aB.innerHTML=`<div class="alerta-box rojo">🚨 Balance negativo (${bal.toLocaleString()} mL). Evaluar hidratación adicional.</div>`;
+  }else{
+    aB.innerHTML="";
+  }
+  // sync orina total with GU field
+  const orTotal=parseFloat(document.getElementById("egr_orina")?.value)||0;
+  if(orTotal>0){document.getElementById("guVolumen").value=orTotal;calcGastoUrinario();}
+}
+
+function calcGastoUrinario(){
+  const vol=parseFloat(document.getElementById("guVolumen").value)||0;
+  const hrs=parseFloat(document.getElementById("guHoras").value)||24;
+  const peso=parseFloat(document.getElementById("hidPeso").value)||0;
+  const sMlH=document.getElementById("statGuMlH");
+  const sMlKgH=document.getElementById("statGuMlKgH");
+  const iMlH=document.getElementById("interpGuMlH");
+  const iMlKgH=document.getElementById("interpGuMlKgH");
+  const aGU=document.getElementById("alertaGU");
+  if(!vol||!hrs){
+    document.getElementById("valGuMlH").textContent="—";
+    document.getElementById("valGuMlKgH").textContent="—";
+    iMlH.textContent="Ingrese datos";iMlKgH.textContent="Ingrese datos";
+    sMlH.className="hid-stat";sMlKgH.className="hid-stat";aGU.innerHTML="";return;
+  }
+  const guMlH=Math.round((vol/hrs)*10)/10;
+  document.getElementById("valGuMlH").textContent=guMlH.toFixed(1);
+  // Per kg/h
+  if(peso>0){
+    const guKg=Math.round((vol/(hrs*peso))*100)/100;
+    document.getElementById("valGuMlKgH").textContent=guKg.toFixed(2);
+    // Classification
+    let cls,interp,alertHtml="";
+    if(guKg<0.1){cls="danger";interp="🚨 ANURIA";alertHtml=`<div class="alerta-box rojo">🚨 <b>Anuria</b> (${guKg.toFixed(2)} mL/kg/h). Falla renal aguda. Manejo urgente en UCI.</div>`;}
+    else if(guKg<0.5){cls="danger";interp="⚠ OLIGURIA";alertHtml=`<div class="alerta-box rojo">⚠ <b>Oliguria</b> (${guKg.toFixed(2)} mL/kg/h). Meta: >0.5 mL/kg/h. Aumentar aporte hídrico.</div>`;}
+    else if(guKg<=1){cls="ok";interp="✅ NORMAL";}
+    else if(guKg<=2){cls="warn";interp="🔼 Elevado";}
+    else{cls="warn";interp="🔵 POLIURIA";alertHtml=`<div class="alerta-box azul">🔵 <b>Poliuria</b> (${guKg.toFixed(2)} mL/kg/h). Puede indicar fase de recuperación o diuresis forzada.</div>`;}
+    sMlKgH.className=`hid-stat ${cls}`;iMlKgH.textContent=interp;
+    aGU.innerHTML=alertHtml;
+    // Badge for table
+  }else{
+    document.getElementById("valGuMlKgH").textContent="—";
+    iMlKgH.textContent="Ingrese peso";
+    sMlKgH.className="hid-stat";
+  }
+  // mL/h classification (without weight)
+  let clsMlH;
+  if(guMlH<10)clsMlH="danger";
+  else if(guMlH<30)clsMlH="warn";
+  else if(guMlH<=80)clsMlH="ok";
+  else clsMlH="warn";
+  sMlH.className=`hid-stat ${clsMlH}`;
+  iMlH.textContent=guMlH<10?"🚨 Muy bajo":guMlH<30?"⚠ Bajo":"✅ Adecuado";
+}
+
+function addRegistro(){
+  const hora=document.getElementById("regHora").value;
+  const vol=parseFloat(document.getElementById("regVolumen").value);
+  if(!hora||!vol||vol<0){alert("Ingrese hora y volumen válidos.");return;}
+  registros.push({hora,vol,ts:hora});
+  registros.sort((a,b)=>a.hora.localeCompare(b.hora));
+  renderRegistros();
+  document.getElementById("regVolumen").value="";
+}
+
+function renderRegistros(){
+  const tbody=document.getElementById("registrosTbody");
+  const peso=parseFloat(document.getElementById("hidPeso").value)||0;
+  document.getElementById("regCount").textContent=registros.length+" registro"+(registros.length!==1?"s":"");
+  if(!registros.length){
+    tbody.innerHTML=`<tr id="regEmptyRow"><td colspan="5" style="text-align:center;color:var(--texto-suave);padding:20px;font-size:.75rem">No hay registros aún.</td></tr>`;
+    document.getElementById("regResumen").textContent="";return;
+  }
+  // Calculate per-row GU (assume each row = 1h unless consecutive rows exist)
+  let totalVol=0;
+  tbody.innerHTML=registros.map((r,i)=>{
+    totalVol+=r.vol;
+    // Hours since previous record
+    let hrs=1;
+    if(i>0){
+      const prev=registros[i-1];
+      const [ph,pm]=prev.hora.split(":").map(Number);
+      const [ch,cm]=r.hora.split(":").map(Number);
+      hrs=((ch*60+cm)-(ph*60+pm))/60;
+      if(hrs<=0)hrs=1;
+    }
+    let guKg="—",badgeHtml="";
+    if(peso>0&&hrs>0){
+      const g=r.vol/(hrs*peso);
+      guKg=g.toFixed(2);
+      let bc="ok",bl="Normal";
+      if(g<0.1){bc="danger";bl="Anuria";}
+      else if(g<0.5){bc="danger";bl="Oliguria";}
+      else if(g<=1){bc="norm";bl="Normal";}
+      else if(g<=2){bc="bajo";bl="Elevado";}
+      else{bc="poliuria";bl="Poliuria";}
+      badgeHtml=`<span class="du-badge ${bc}">${bl}</span>`;
+    }
+    return`<tr>
+      <td><b>${r.hora}</b></td>
+      <td>${r.vol} mL</td>
+      <td>${guKg}${peso>0?" mL/kg/h":""}</td>
+      <td>${badgeHtml||"—"}</td>
+      <td><button class="hid-row-btn" onclick="deleteRegistro(${i})" title="Eliminar">🗑</button></td>
+    </tr>`;
+  }).join("");
+  // Resumen
+  const avgH=registros.length>1?(totalVol/registros.length).toFixed(0):totalVol;
+  document.getElementById("regResumen").textContent=`Total: ${totalVol} mL en ${registros.length} mediciones`;
+  // Update orina total
+  document.getElementById("egr_orina").value=totalVol;
+  document.getElementById("guVolumen").value=totalVol;
+  document.getElementById("guHoras").value=registros.length;
+  calcBalance();
+  calcGastoUrinario();
+}
+
+function deleteRegistro(i){
+  registros.splice(i,1);renderRegistros();
+}
+function clearRegistros(){
+  if(registros.length&&!confirm("¿Eliminar todos los registros de diuresis?"))return;
+  registros=[];renderRegistros();
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
-setLogos();
-renderCuadroClinico();
-renderExamenes();
+  setLogos();
+  renderCuadroClinico();
+  renderExamenes();
+  // Set default date/time for hydration tab
+  const now=new Date();
+  const dateStr=now.toISOString().split("T")[0];
+  const timeStr=now.toTimeString().slice(0,5);
+  const fd=document.getElementById("hidFecha");
+  const ft=document.getElementById("hidHora");
+  if(fd)fd.value=dateStr;
+  if(ft)ft.value=timeStr;
+  // Sync peso from patient tab if available
+  document.getElementById("hidPeso").addEventListener("focus",()=>{
+    const p=document.getElementById("peso")?.value;
+    if(p&&!document.getElementById("hidPeso").value)document.getElementById("hidPeso").value=p;
+  });
 });</script>
 </body>
 </html>
