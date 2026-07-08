@@ -81,6 +81,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--t
 label{font-size:.7rem;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px}
 input,select,textarea{font-family:'Montserrat',sans-serif;font-size:.83rem;padding:8px 11px;border:1.5px solid var(--gris-borde);border-radius:8px;color:var(--texto);background:#fff;transition:border-color .2s,box-shadow .2s;outline:none}
 .quick-select{font-size:.68rem!important;padding:5px 7px!important;margin-bottom:4px;color:var(--texto-suave);border-color:#DCE3EB!important;background:#F8FAFC!important}
+.input-error{border-color:#C1121F!important;background:#FFF1F2!important;box-shadow:0 0 0 2px rgba(193,18,31,.15)!important}
 input:focus,select:focus,textarea:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,119,182,.1)}
 textarea{resize:vertical;min-height:70px}
 .sintomas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
@@ -333,9 +334,9 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Sexo</label>
  <select id="sexo"><option value="">Seleccionar</option><option value="MASCULINO">Masculino</option><option value="FEMENINO">Femenino</option></select>
  </div>
- <div class="form-group"><label>Edad</label>
- <select class="quick-select" onchange="quickFill('edad',this.value)"><option value="">⚡ Selección rápida…</option><option value="1">1</option><option value="2">2</option><option value="5">5</option><option value="8">8</option><option value="12">12</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option></select>
- <input type="number" id="edad" placeholder="Años" min="0" max="120"></div>
+ <div class="form-group"><label>Edad (años, use decimales en lactantes)</label>
+ <select class="quick-select" onchange="quickFill('edad',this.value)"><option value="">⚡ Selección rápida…</option><option value="0.08">1 mes</option><option value="0.5">6 meses</option><option value="1">1 año</option><option value="2">2</option><option value="5">5</option><option value="8">8</option><option value="12">12</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option></select>
+ <input type="number" id="edad" placeholder="Años (ej. 0.5 = 6 meses)" min="0" max="120" step="0.01" oninput="calcHemodinamia()"></div>
  <div class="form-group"><label>Peso (kg)</label>
  <select class="quick-select" onchange="quickFill('peso',this.value)"><option value="">⚡ Selección rápida…</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option></select>
  <input type="number" id="peso" placeholder="kg" min="1" max="300"></div>
@@ -393,9 +394,13 @@ textarea{resize:vertical;min-height:70px}
  <span>📏 <b>Presión diferencial:</b> <span id="pulsePressureVal">—</span></span>
  <span id="hemoAlertText" style="font-weight:700"></span>
  </div>
+ <div class="form-group span2" id="rangoEdadBox" style="font-size:.68rem;color:var(--texto-suave);margin-top:-8px"></div>
  <div class="form-group span2"><label>APP / Antecedentes relevantes</label><textarea id="antecedentes" placeholder="Antecedentes patológicos personales, alergias, medicación actual..."></textarea></div>
  <div class="form-group span2"><label>Observaciones clínicas adicionales</label><textarea id="observaciones" placeholder="Examen físico, hallazgos relevantes..."></textarea></div>
  <div class="form-group span2"><label>Institución</label><input type="text" id="institucion" placeholder="Hospital / Centro de salud"></div>
+ <div class="form-group"><label>¿Esta institución cuenta con UCI?</label>
+ <select id="tieneUCI"><option value="si">Sí</option><option value="no">No</option><option value="nose">No sé / verificar</option></select>
+ </div>
  </div>
  </div>
  </div>
@@ -506,7 +511,7 @@ textarea{resize:vertical;min-height:70px}
    <div class="card-body">
     <div class="form-grid" style="margin-bottom:12px">
      <div class="form-group"><label>Grupo de manejo</label>
-      <select id="omsGrupo" onchange="calcOMSFluidos()">
+      <select id="omsGrupo" onchange="calcOMSFluidos();renderCicloOMS();">
        <option value="A">Grupo A — Ambulatorio (DSSA)</option>
        <option value="B">Grupo B — Hospitalización (DCSA)</option>
        <option value="C">Grupo C — Choque / UCI (DG)</option>
@@ -518,6 +523,19 @@ textarea{resize:vertical;min-height:70px}
      <button class="btn-add-diuresis" onclick="registrarBolo()">🩹 Registrar bolo / inicio de infusión</button>
      <span id="boloReminder" style="font-size:.72rem;color:var(--texto-suave)"></span>
     </div>
+   </div>
+  </div>
+
+  <!-- CICLO DE REANIMACIÓN OMS (motor de reevaluación dinámica) -->
+  <div class="card">
+   <div class="card-header balance">
+    <div class="card-icon balance">🔄</div>
+    <h2>Ciclo de Reanimación OMS</h2>
+    <span class="numero" id="cicloEstadoBadge">Sin iniciar</span>
+   </div>
+   <div class="card-body">
+    <div id="cicloStepper" style="display:flex;justify-content:space-between;gap:4px;margin-bottom:14px;flex-wrap:wrap"></div>
+    <div id="cicloDetalle"></div>
    </div>
   </div>
 
@@ -997,8 +1015,26 @@ if(!value)return;
 const el=document.getElementById(id);
 if(!el)return;
 el.value=value;
-if(id==="tensionArterial"||id==="frecCard"||id==="horasDefervescencia")calcHemodinamia();
+if(id==="tensionArterial"||id==="frecCard"||id==="horasDefervescencia"||id==="edad")calcHemodinamia();
 if(id==="hidPeso")calcHidMetas();
+}
+// Rangos fisiológicos ajustados por edad (referencia PALS/APLS) para FC, FR y PAS mínima
+// aceptable. Una FC de 130 es normal en un lactante pero taquicardia severa en un adulto;
+// una PAS de 80 es choque en el adulto pero aceptable en un preescolar. Sin este ajuste,
+// el sistema usaría umbrales de adulto para todos los pacientes — riesgo real en pediatría.
+const RANGOS_EDAD=[
+{max:0.083,label:"Neonato (<1 mes)",fcMin:100,fcMax:180,frMin:30,frMax:60,pasMin:60},
+{max:1,label:"Lactante (1–12 meses)",fcMin:100,fcMax:160,frMin:24,frMax:38,pasMin:70},
+{max:2,label:"Párvulo (1–2 años)",fcMin:90,fcMax:150,frMin:22,frMax:34,pasMin:72},
+{max:5,label:"Preescolar (3–5 años)",fcMin:80,fcMax:140,frMin:20,frMax:28,pasMin:76},
+{max:11,label:"Escolar (6–11 años)",fcMin:70,fcMax:120,frMin:18,frMax:24,pasMin:82},
+{max:17,label:"Adolescente (12–17 años)",fcMin:60,fcMax:100,frMin:12,frMax:20,pasMin:90},
+{max:999,label:"Adulto (≥18 años)",fcMin:60,fcMax:100,frMin:12,frMax:20,pasMin:90}
+];
+function rangoPorEdad(edadAnios){
+if(edadAnios==null||isNaN(edadAnios)||edadAnios<0)return null;
+for(const r of RANGOS_EDAD)if(edadAnios<=r.max)return r;
+return RANGOS_EDAD[RANGOS_EDAD.length-1];
 }
 function parseTA(){
 const ta=val("tensionArterial");
@@ -1013,6 +1049,8 @@ return{pas:parseFloat(m[1]),pad:parseFloat(m[2])};
 function calcHemodinamia(){
 const{pas,pad}=parseTA();
 const fc=num("frecCard");
+const edadAnios=num("edad")||null;
+const rango=rangoPorEdad(edadAnios);
 const siEl=document.getElementById("shockIndexVal");
 const ppEl=document.getElementById("pulsePressureVal");
 const alertEl=document.getElementById("hemoAlertText");
@@ -1023,31 +1061,50 @@ if(siEl)siEl.textContent=shockIndex.toFixed(2)+(shockIndex>=1.3?" 🔴 choque es
 }else if(siEl)siEl.textContent="—";
 if(pas>0&&pad>0){
 pulsePressure=pas-pad;
-if(ppEl)ppEl.textContent=pulsePressure+" mmHg"+(pulsePressure<20?" 🔴 sospecha de choque por dengue":pulsePressure<=40?" 🟡 vigilancia":" 🟢 normal");
+if(ppEl)ppEl.textContent=pulsePressure+" mmHg"+(pulsePressure<=20?" 🔴 sospecha de choque por dengue":pulsePressure<=40?" 🟡 vigilancia":" 🟢 normal");
 }else if(ppEl)ppEl.textContent="—";
 const motivos=[];
 if(shockIndex>=0.9)motivos.push("Índice de choque elevado");
-if(pulsePressure>0&&pulsePressure<20)motivos.push("Presión diferencial estrecha (<20 mmHg)");
+if(pulsePressure>0&&pulsePressure<=20)motivos.push("Presión diferencial estrecha (≤20 mmHg) — signo precoz de choque por dengue, puede preceder a la hipotensión franca");
 if(val("llenadoCapilar")==="prolongado")motivos.push("Llenado capilar ≥2 seg");
 if(val("pulsosPerif")==="debiles")motivos.push("Pulsos periféricos débiles");
 if(val("pulsosPerif")==="ausentes")motivos.push("Pulsos periféricos ausentes");
 if(val("extremidades")==="frias")motivos.push("Extremidades frías / moteadas");
 if(val("estadoMental")==="letargico")motivos.push("Letargia / irritabilidad");
 if(val("estadoMental")==="inconsciente")motivos.push("Alteración grave del estado de conciencia");
-// Choque oculto/compensado: taquicardia con PAS "normal" pero presión diferencial ya estrecha
-if(fc>100&&pas>=90&&pulsePressure>0&&pulsePressure<30&&!motivos.includes("Presión diferencial estrecha (<20 mmHg)"))motivos.push("Posible choque compensado/oculto (taquicardia + PA aparentemente normal + PP estrecha)");
+// Hipotensión y taquicardia AJUSTADAS POR EDAD (no umbrales fijos de adulto): una PAS de
+// 80 o una FC de 130 pueden ser normales en un lactante y graves en un adulto, o viceversa.
+if(rango){
+if(pas>0&&pas<rango.pasMin)motivos.push(`Hipotensión para la edad (PAS ${pas} < ${rango.pasMin} mmHg esperado en ${rango.label})`);
+if(fc>0&&fc>rango.fcMax)motivos.push(`Taquicardia para la edad (FC ${fc} > ${rango.fcMax}/min esperado en ${rango.label})`);
+if(fc>0&&fc<rango.fcMin)motivos.push(`Bradicardia para la edad (FC ${fc} < ${rango.fcMin}/min esperado en ${rango.label}) — signo tardío/preocupante de descompensación`);
+}
+// Choque oculto/compensado: taquicardia (para la edad) con PAS "aparentemente normal para
+// la edad" pero presión diferencial ya estrecha — se pierde si se usan umbrales fijos de adulto.
+const fcMaxRef=rango?rango.fcMax:100,pasMinRef=rango?rango.pasMin:90;
+if(fc>fcMaxRef&&pas>=pasMinRef&&pulsePressure>0&&pulsePressure<30&&!motivos.some(m=>m.startsWith("Presión diferencial estrecha")))motivos.push("Posible choque compensado/oculto (taquicardia para la edad + PA aparentemente normal + PP estrecha)");
 if(alertEl){
 alertEl.innerHTML=motivos.length?("⚠ "+motivos.join(" · ")):"";
 alertEl.style.color=motivos.length?"#C1121F":"";
 }
-return{shockIndex,pulsePressure,pas,pad,motivos};
+const rangoBox=document.getElementById("rangoEdadBox");
+if(rangoBox){
+rangoBox.textContent=rango?`📏 Rango de referencia aplicado: ${rango.label} — FC normal ${rango.fcMin}–${rango.fcMax}/min · FR ${rango.frMin}–${rango.frMax}/min · PAS mínima aceptable ${rango.pasMin} mmHg.`:`📏 Ingrese la edad para aplicar rangos fisiológicos ajustados por grupo etario (actualmente se usan solo los umbrales generales de índice de choque/presión diferencial).`;
+}
+return{shockIndex,pulsePressure,pas,pad,motivos,rango};
 }
 function clasificar(grales,alarmas,graves,comorbilidades,hemo){
-hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
+hemo=hemo||{shockIndex:0,pulsePressure:0,pas:0,motivos:[]};
+const rango=hemo.rango||rangoPorEdad(num("edad"));
+// Hipotensión objetiva ajustada por edad: dispara DG por sí sola, incluso si el usuario
+// no ingresó la FC y por lo tanto el índice de choque no pudo calcularse. Esto evita que
+// una PAS de 70 en un adulto (o de 65 en un lactante) pase inadvertida por depender de
+// que alguien también haya marcado manualmente el síntoma "Choque" en la lista.
+const hipotensionEdad=rango&&hemo.pas>0&&hemo.pas<rango.pasMin;
 // Choque descompensado / signos de gravedad hemodinámica -> DG aunque no se hayan marcado
 // manualmente síntomas graves. Esto evita que un paciente en choque compensado quede
 // clasificado como DSSA solo porque nadie marcó una casilla.
-const choqueGrave=hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<20)||val("pulsosPerif")==="ausentes"||val("estadoMental")==="inconsciente"||val("extremidades")==="frias"&&val("pulsosPerif")==="debiles";
+const choqueGrave=hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<=20)||hipotensionEdad||val("pulsosPerif")==="ausentes"||val("estadoMental")==="inconsciente"||val("extremidades")==="frias"&&val("pulsosPerif")==="debiles";
 if(graves.length>0||choqueGrave)return"DG";
 if(alarmas.length>0||comorbilidades.length>0)return"DCSA";
 // Cualquier signo hemodinámico temprano (choque compensado/oculto) obliga a hospitalizar
@@ -1056,7 +1113,52 @@ if(hemo.motivos.length>0)return"DCSA";
 if(grales.length>=2)return"DSSA";
 return"DSSA";
 }
+// Límites fisiológicos absolutos: fuera de estos rangos el dato es imposible en un ser
+// humano vivo, así que se bloquea el procesamiento hasta corregirlo (no solo se advierte).
+const LIMITES_FISIOLOGICOS={
+frecCard:{min:20,max:300,label:"Frecuencia cardíaca"},
+frecResp:{min:4,max:80,label:"Frecuencia respiratoria"},
+temperatura:{min:30,max:43,label:"Temperatura"},
+spo2:{min:0,max:100,label:"SpO₂"},
+hematocrito:{min:10,max:70,label:"Hematocrito"},
+plaquetas:{min:0,max:800,label:"Plaquetas"},
+peso:{min:0.5,max:300,label:"Peso"},
+edad:{min:0,max:120,label:"Edad"}
+};
+function validarCampoFisiologico(id){
+const conf=LIMITES_FISIOLOGICOS[id];
+const el=document.getElementById(id);
+if(!conf||!el)return true;
+if(el.value===""){el.classList.remove("input-error");return true;}
+const v=parseFloat(el.value);
+if(isNaN(v)||v<conf.min||v>conf.max){el.classList.add("input-error");return false;}
+el.classList.remove("input-error");
+return true;
+}
+function validarTAFisiologica(){
+const el=document.getElementById("tensionArterial");
+if(!el)return true;
+if(el.value.trim()===""){el.classList.remove("input-error");return true;}
+const{pas,pad}=parseTA();
+const ok=pas>0&&pad>0&&pas>=30&&pas<=300&&pad>=10&&pad<=200&&pad<pas;
+if(!ok){el.classList.add("input-error");return false;}
+el.classList.remove("input-error");
+return true;
+}
+function validarFormularioAntesDeEvaluar(){
+const invalidos=Object.keys(LIMITES_FISIOLOGICOS).filter(id=>!validarCampoFisiologico(id));
+const taOk=validarTAFisiologica();
+if(invalidos.length>0||!taOk){
+const nombres=invalidos.map(id=>LIMITES_FISIOLOGICOS[id].label);
+if(!taOk)nombres.push("Tensión Arterial");
+alert("⚠ No se puede generar el diagnóstico: hay valores fisiológicamente imposibles (resaltados en rojo).\n\nCorrija: "+nombres.join(", "));
+return false;
+}
+return true;
+}
 function evaluar(){
+if(!validarFormularioAntesDeEvaluar())return;
+ultimaEvaluacion=Date.now();
 const{grales,alarmas,graves,comorbilidades}=getActivos();
 const hemo=calcHemodinamia();
 const clase=clasificar(grales,alarmas,graves,comorbilidades,hemo);
@@ -1073,6 +1175,7 @@ autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas);
 renderPlantilla(clase,grales,alarmas,graves,comorbilidades,peso,plaq,hema,spo2,dias);
 document.getElementById("cardDx").classList.add("animated");
 document.getElementById("cardTx").classList.add("animated");
+if(typeof renderCicloOMS==="function")renderCicloOMS();
 }
 function validarSignosVitales(fc,fr,temp,spo2,hema,plaq,peso,edad){
 const warns=[];
@@ -1090,22 +1193,38 @@ if(pad>0&&(pad<10||pad>200))warns.push(`PAD ${pad} mmHg fuera de rango fisiológ
 if(pas>0&&pad>0&&pad>=pas)warns.push(`PAD (${pad}) no puede ser mayor o igual que PAS (${pas}) — verifique el dato`);
 return warns;
 }
-function semaforoNivel(clase,alarmas,graves,hemo){
-if(clase==="DG"||graves.length>0)return{css:"rojo",emoji:"🔴",label:"EMERGENCIA / UCI"};
+// Motor de priorización de recursos: diferencia 5 niveles de cuidado en vez de un
+// binario hospitalización/UCI, y considera si la institución actual cuenta con UCI
+// para distinguir "ingresar a UCI aquí" de "referir urgentemente a mayor complejidad".
+function nivelDeCuidado(clase,alarmas,graves,hemo,refract,comorbilidades){
+const tieneUCI=val("tieneUCI");
+const requiereUCI=refract.refractario||graves.length>0||hemo.shockIndex>=1.3||val("estadoMental")==="inconsciente";
+if(requiereUCI){
+if(tieneUCI==="no")return{nivel:"REFERENCIA URGENTE",css:"rojo",emoji:"🚑",desc:"Requiere UCI y esta institución no cuenta con ella: coordinar traslado urgente a un centro de mayor complejidad, estabilizando durante el traslado."};
+return{nivel:"UCI",css:"rojo",emoji:"🔴",desc:"Ingreso a Unidad de Cuidados Intensivos."};
+}
+if(clase==="DG"||hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<=20))return{nivel:"CUIDADOS INTERMEDIOS",css:"naranja",emoji:"🟠",desc:"Choque compensado / signo grave sin criterio absoluto de UCI aún — vigilancia estrecha con capacidad de escalar rápidamente."};
+if(clase==="DCSA"&&(alarmas.length>1||hemo.motivos.length>0||comorbilidades.length>0))return{nivel:"HOSPITALIZACIÓN CON VIGILANCIA ESTRECHA",css:"amarillo",emoji:"🟡",desc:"Sala de hospitalización, monitoreo c/1–2h."};
+if(clase==="DCSA")return{nivel:"HOSPITALIZACIÓN CONVENCIONAL",css:"amarillo",emoji:"🟡",desc:"Sala general, monitoreo activo."};
+return{nivel:"OBSERVACIÓN AMBULATORIA",css:"verde",emoji:"🟢",desc:"Manejo domiciliario con controles programados y signos de alarma explicados."};
+}
+function semaforoNivel(clase,alarmas,graves,hemo,refract){
+if(clase==="DG"||graves.length>0||(refract&&refract.refractario))return{css:"rojo",emoji:"🔴",label:refract&&refract.refractario?"EMERGENCIA / UCI — Choque refractario":"EMERGENCIA / UCI"};
 if(clase==="DCSA"&&(alarmas.length>1||hemo.motivos.length>0))return{css:"naranja",emoji:"🟠",label:"ALTO RIESGO — Hospitalización con vigilancia estrecha"};
 if(clase==="DCSA")return{css:"amarillo",emoji:"🟡",label:"VIGILANCIA — Hospitalización, monitoreo activo"};
 return{css:"verde",emoji:"🟢",label:"ESTABLE — Manejo ambulatorio con controles"};
 }
-function criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo){
+function criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo,refract){
 const hosp=[],uci=[];
 if(alarmas.includes("Vómitos persistentes"))hosp.push("Vómitos persistentes");
 if(comorbilidades.includes("Embarazo"))hosp.push("Embarazo");
 if(comorbilidades.length>0)hosp.push("Comorbilidad(es): "+comorbilidades.join(", "));
 if(alarmas.length>0)hosp.push("Signo(s) de alarma presentes");
-if(graves.includes("Choque / dificultad respiratoria")||hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<20))uci.push("Choque (clínico o por índice de choque/presión diferencial)");
+if(graves.includes("Choque / dificultad respiratoria")||hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<=20))uci.push("Choque (clínico o por índice de choque/presión diferencial)");
 if(graves.includes("Sangrado grave"))uci.push("Sangrado masivo");
 if(graves.includes("Daño hepático grave")||graves.includes("Miocarditis / Falla orgánica"))uci.push("Falla orgánica");
 if(val("estadoMental")==="inconsciente")uci.push("Encefalopatía / alteración grave de conciencia");
+if(refract&&refract.refractario)uci.push("Choque refractario a la reanimación con fluidos (ver Tendencia Serial)");
 return{hosp,uci};
 }
 function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo){
@@ -1119,8 +1238,10 @@ const info=[nombre,edad,sexo,val("cedula")].filter(Boolean).join(" · ");
 let html=`<div class="result-content">`;
 const warnFis=validarSignosVitales(num("frecCard"),num("frecResp"),num("temperatura"),spo2,hema,plaq,num("peso"),num("edad"));
 if(warnFis.length){html+=`<div class="alerta-box rojo">⚠️ <b>Verifique el ingreso de datos</b> — valor(es) fuera de rango fisiológico: ${warnFis.join(" · ")}</div>`;}
-const nivel=semaforoNivel(clase,alarmas,graves,hemo);
+const nivel=semaforoNivel(clase,alarmas,graves,hemo,detectarChoqueRefractario());
 html+=`<div class="alerta-box ${nivel.css}" style="font-size:.85rem;font-weight:700;align-items:center">${nivel.emoji} ${nivel.label}</div>`;
+const nivelCuidado=nivelDeCuidado(clase,alarmas,graves,hemo,detectarChoqueRefractario(),comorbilidades);
+html+=`<div class="alerta-box ${nivelCuidado.css}" style="align-items:flex-start"><div>${nivelCuidado.emoji} <b>Nivel de cuidado recomendado: ${nivelCuidado.nivel}</b><br><span style="font-weight:400">${nivelCuidado.desc}</span></div></div>`;
 html+=`<div class="clasificacion-badge ${cls}">${label}</div>`;
 if(info){html+=`<div style="font-size:.75rem;color:var(--texto-suave);margin-bottom:10px">👤 ${info}</div>`;}
 const sangradoActivoDx=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
@@ -1134,7 +1255,7 @@ if(spo2>0&&spo2<94){html+=`<div class="alerta-box rojo">🚨 SpO₂ ${spo2}% —
 if(hemo.shockIndex>0||hemo.pulsePressure>0){
 const siTxt=hemo.shockIndex>0?`ÍC: ${hemo.shockIndex.toFixed(2)}`:"ÍC: —";
 const ppTxt=hemo.pulsePressure>0?`PP: ${hemo.pulsePressure} mmHg`:"PP: —";
-const riesgo=hemo.shockIndex>=1||( hemo.pulsePressure>0&&hemo.pulsePressure<20);
+const riesgo=hemo.shockIndex>=1||( hemo.pulsePressure>0&&hemo.pulsePressure<=20);
 html+=`<div class="alerta-box ${riesgo?"rojo":"azul"}">💓 ${siTxt} · ${ppTxt}${hemo.motivos.length?` — ${hemo.motivos.join(", ")}`:""}</div>`;
 }
 const addSec=(titulo,items,color)=>{
@@ -1147,9 +1268,13 @@ addSec("Síntomas presentes",grales,"#06402B");
 addSec("Signos de alarma",alarmas,"#C1121F");
 addSec("Signos graves",graves,"#7C3AED");
 addSec("Comorbilidades / Factores de riesgo",comorbilidades,"#2D6A4F");
-const crit=criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo);
+const crit=criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo,detectarChoqueRefractario());
 if(crit.uci.length>0){html+=`<div class="alerta-box rojo"><b>🚨 Criterios de UCI cumplidos:</b><br>${crit.uci.map(x=>"• "+x).join("<br>")}</div>`;}
 else if(crit.hosp.length>0){html+=`<div class="alerta-box amarillo"><b>🏥 Criterios de hospitalización cumplidos:</b><br>${crit.hosp.map(x=>"• "+x).join("<br>")}</div>`;}
+const refractDx=detectarChoqueRefractario();
+if(refractDx.refractario){
+html+=`<div class="alerta-box rojo"><b>🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial:</b><br>${refractDx.hallazgos.map(h=>`• ${h.texto}<br>&nbsp;&nbsp;↳ <i>${h.complicacion}</i>`).join("<br>")}<br><br><b>Conducta:</b> soporte vasopresor, ingreso/escalamiento a UCI, estudio dirigido de las complicaciones señaladas arriba.</div>`;
+}
 const feverCedioDx=val("feverCedio");
 const horasDefervDx=num("horasDefervescencia");
 let fase,faseNota;
@@ -1229,6 +1354,16 @@ html+=trat("urgente","👁️ Monitoreo UCI",`<ul>
 <li>Ecocardiograma urgente si hay alteración hemodinámica</li>
 </ul>`);
 html+=trat("morado","🚫 Contraindicaciones Absolutas","NO corticoesteroides · NO AINEs · NO aspirina · NO antibióticos profilácticos sin foco infeccioso demostrado");
+}
+const refractTx=detectarChoqueRefractario();
+if(refractTx.refractario){
+const hallazgosHtml=refractTx.hallazgos.map(h=>`<li>${h.texto} → <b>${h.complicacion}</b></li>`).join("");
+html+=trat("urgente","🚨 Choque Refractario — Escalar Manejo",`No hay respuesta adecuada tras los bolos de cristaloides administrados. Hallazgos y complicación específica a descartar en cada caso:<ul>${hallazgosHtml}</ul><b>Conducta general sugerida:</b><ul>
+<li>Considerar bolo adicional con coloide (ej. albúmina) si ya se administraron ≥2 bolos de cristaloides</li>
+<li>Iniciar soporte vasopresor (ej. norepinefrina) si persiste hipotensión pese a fluidos adecuados</li>
+<li>Traslado / escalamiento a UCI</li>
+<li>Dirigir estudios según la complicación señalada arriba: ecografía FAST y Hb/Hto seriados (sangrado oculto), troponina/ECG/ecocardiograma (miocarditis), hemocultivo/lactato/procalcitonina (sepsis)</li>
+</ul>`);
 }
 html+="</div>";
 document.getElementById("txContent").innerHTML=html;
@@ -1495,6 +1630,34 @@ function calcOMSFluidos(){
   const box=document.getElementById("omsFluidosResult");
   if(!box)return;
   if(!peso){box.innerHTML=`<div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div>`;return;}
+  let dynHtml="";
+  // MOTOR DE FLUIDOTERAPIA DINÁMICA: combina Índice de Choque, presión de pulso,
+  // hematocrito seriado y diuresis horaria (respuesta a cada bolo) para recomendar
+  // la siguiente acción, en vez de mostrar solo un esquema estático fijo.
+  if(grupo!=="A"){
+    const refract=typeof detectarChoqueRefractario==="function"?detectarChoqueRefractario():{refractario:false,motivos:[]};
+    const last=(typeof trendData!=="undefined"&&trendData.length)?trendData[trendData.length-1]:null;
+    const persisteChoque=last&&((last.si>=1)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5));
+    let accionTitulo,accionTexto,sev;
+    if(refract.refractario){
+      sev="rojo";
+      accionTitulo="🚨 CHOQUE REFRACTARIO — escalar manejo";
+      accionTexto=`No hay respuesta adecuada pese a los bolos administrados (${refract.motivos.join("; ")}). <b>Recomendación:</b> repetir bolo / considerar coloide, iniciar soporte vasopresor, traslado o escalamiento a UCI, y descartar sangrado oculto, miocarditis o sepsis concomitante.`;
+    }else if(last&&persisteChoque){
+      sev="naranja";
+      accionTitulo=grupo==="C"?"🔁 Repetir bolo (persiste choque)":"⬆️ Aumentar a 5–7 mL/kg/h";
+      accionTexto=`Última medición registrada (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. No reducir el aporte de fluidos todavía; reevalúe en 15–30 min tras la siguiente intervención.`;
+    }else if(last&&!persisteChoque){
+      sev="verde";
+      accionTitulo="⬇️ Reducir al siguiente escalón";
+      accionTexto=`Última medición registrada (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>mejoría hemodinámica</b>. Puede continuar el descenso escalonado del esquema y seguir reevaluando cada 1–2 h.`;
+    }else{
+      sev="azul";
+      accionTitulo=grupo==="C"?"▶️ Iniciar bolo inicial":"▶️ Iniciar infusión";
+      accionTexto="Aún no hay mediciones seriadas registradas. Registre Índice de Choque, presión de pulso, hematocrito y diuresis en «Tendencia Serial» después de cada intervención para activar el ajuste dinámico automático.";
+    }
+    dynHtml=`<div class="alerta-box ${sev}" style="margin-bottom:10px"><b>🎯 Recomendación dinámica actual — ${accionTitulo}</b><br>${accionTexto}</div>`;
+  }
   let html="";
   if(grupo==="A"){
     const min=Math.round(peso*60),max=Math.round(peso*80);
@@ -1503,7 +1666,7 @@ function calcOMSFluidos(){
     const r1=Math.round(peso*5),r1b=Math.round(peso*7);
     const r2=Math.round(peso*3),r2b=Math.round(peso*5);
     const r3=Math.round(peso*2),r3b=Math.round(peso*3);
-    html=`<div class="alerta-box amarillo">🏥 <b>Grupo B (IV):</b><br>
+    html=`<div class="alerta-box amarillo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OMS/OPS</span><br>🏥 <b>Grupo B (IV):</b><br>
 1) <b>${r1}–${r1b} mL/h</b> (5–7 mL/kg/h) × 1–2 horas → reevaluar PA, FC, Hto, GU.<br>
 2) Si mejora clínicamente: reducir a <b>${r2}–${r2b} mL/h</b> (3–5 mL/kg/h) × 2–4 horas → reevaluar.<br>
 3) Si continúa mejorando: reducir a <b>${r3}–${r3b} mL/h</b> (2–3 mL/kg/h), ajustar según respuesta.<br>
@@ -1511,23 +1674,15 @@ function calcOMSFluidos(){
   }else{
     const bolo1=Math.round(peso*10),bolo2=Math.round(peso*20);
     const p10=Math.round(peso*10),p7=Math.round(peso*7),p5=Math.round(peso*5),p3=Math.round(peso*3);
-    html=`<div class="alerta-box rojo">🚨 <b>Grupo C — Choque (IV urgente):</b><br>
+    html=`<div class="alerta-box rojo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OMS/OPS</span><br>🚨 <b>Grupo C — Choque (IV urgente):</b><br>
 1) Bolo inicial: <b>${bolo1}–${bolo2} mL</b> (10–20 mL/kg) en 15–30 minutos.<br>
 2) Reevaluar inmediatamente. Si mejora: continuar con ${p10} mL/h (10 mL/kg/h) × 1h, luego reducir progresivamente a ${p7}, ${p5}, ${p3} mL/h (7→5→3 mL/kg/h) según respuesta.<br>
 3) Si NO mejora tras el primer bolo: repetir bolo, considerar coloide, y evaluar vasopresores / UCI.<br>
 <span style="font-weight:700">Reevaluación continua: PA, FC, llenado capilar, Hto, diuresis cada 15–30 min.</span></div>`;
   }
-  if(grupo!=="A"&&typeof trendData!=="undefined"&&trendData.length>0){
-    const last=trendData[trendData.length-1];
-    const persisteChoque=(last.si>=1)||(last.pp>0&&last.pp<20)||(last.gu>0&&last.gu<0.5);
-    if(persisteChoque){
-      html+=`<div class="alerta-box rojo" style="margin-top:8px">📉 Última medición registrada (${last.hora}) sugiere que el paciente <b>persiste con signos de choque</b> (ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h). Mantener o repetir bolo; NO reducir aún la velocidad de infusión.</div>`;
-    }else{
-      html+=`<div class="alerta-box verde" style="margin-top:8px">📈 Última medición registrada (${last.hora}) sugiere mejoría hemodinámica. Puede continuar con el descenso escalonado del esquema.</div>`;
-    }
-  }
-  box.innerHTML=html;
+  box.innerHTML=dynHtml+html;
 }
+let ultimaEvaluacion=null;
 let ultimoBolo=null;
 let boloInterval=null;
 function registrarBolo(){
@@ -1538,6 +1693,7 @@ function registrarBolo(){
   if(boloInterval)clearInterval(boloInterval);
   boloInterval=setInterval(actualizarRecordatorioBolo,15000);
   actualizarRecordatorioBolo();
+  renderCicloOMS();
 }
 function actualizarRecordatorioBolo(){
   const el=document.getElementById("boloReminder");
@@ -1551,6 +1707,78 @@ function actualizarRecordatorioBolo(){
     el.innerHTML=`🔴 <b>Han pasado ${Math.abs(Math.ceil(restante))} min desde el bolo — REEVALÚE AHORA</b> (PA, FC, llenado capilar, Hto, diuresis) y registre los valores en Tendencia Serial.`;
     el.style.color="#C1121F";
   }
+  renderCicloOMS();
+}
+// Representa visualmente el ciclo completo recomendado por la OMS:
+// Evaluación inicial → Fluidoterapia → Reevaluación (1–2h) → Nuevo hematocrito → Ajuste
+// de velocidad → (vuelve a Reevaluación). El estado de cada paso se deriva de acciones
+// reales ya registradas (evaluar(), registrarBolo(), addTrendRow()), no es decorativo.
+function renderStepperHTML(pasos,estados){
+  return pasos.map((p,i)=>{
+    const st=estados[i];
+    const color=st===2?"#2D6A4F":st===1?"#CA8A04":"#CBD5E1";
+    const bg=st===2?"#DCFCE7":st===1?"#FEF9C3":"#F1F5F9";
+    return`<div style="flex:1;min-width:84px;text-align:center">
+      <div style="width:26px;height:26px;border-radius:50%;background:${bg};border:2px solid ${color};color:${color};display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:.7rem;font-weight:700">${st===2?"✓":i+1}</div>
+      <div style="font-size:.6rem;color:${st===0?"#94A3B8":"#334155"};line-height:1.2">${p}</div>
+    </div>`;
+  }).join("");
+}
+function renderCicloOMS(){
+  const stepperEl=document.getElementById("cicloStepper");
+  const detalleEl=document.getElementById("cicloDetalle");
+  const badgeEl=document.getElementById("cicloEstadoBadge");
+  if(!stepperEl||!detalleEl)return;
+  const grupo=document.getElementById("omsGrupo")?.value||"A";
+  const pasos=["Evaluación inicial","Fluidoterapia","Reevaluación (1–2h)","Nuevo hematocrito","Ajuste de velocidad"];
+  if(grupo==="A"){
+    stepperEl.innerHTML="";
+    detalleEl.innerHTML=`<div class="alerta-box verde">Grupo A (ambulatorio): no requiere ciclo de fluidoterapia IV / reevaluación hospitalaria.</div>`;
+    if(badgeEl)badgeEl.textContent="No aplica (Grupo A)";
+    return;
+  }
+  const estados=[0,0,0,0,0];
+  if(!ultimaEvaluacion){
+    detalleEl.innerHTML=`<div class="alerta-box azul">Complete la evaluación clínica inicial (botón "Evaluar Paciente") para iniciar el ciclo de reanimación.</div>`;
+    if(badgeEl)badgeEl.textContent="Sin iniciar";
+    stepperEl.innerHTML=renderStepperHTML(pasos,[1,0,0,0,0]);
+    return;
+  }
+  estados[0]=2;
+  let detalle,badgeTxt="Evaluación inicial completa";
+  if(!ultimoBolo){
+    estados[1]=1;
+    detalle=`<div class="alerta-box amarillo">✅ Evaluación inicial completa. Registre el bolo/inicio de infusión (botón arriba) para continuar el ciclo.</div>`;
+    badgeTxt="Pendiente: fluidoterapia";
+  }else{
+    estados[1]=2;
+    const trasBolo=trendData.filter(r=>r.ts&&r.ts>ultimoBolo.time);
+    const elapsedMin=(Date.now()-ultimoBolo.time)/60000;
+    const restante=ultimoBolo.minutos-elapsedMin;
+    if(trasBolo.length===0){
+      estados[2]=1;
+      const restanteTxt=restante>0?`en ${Math.ceil(restante)} min`:"AHORA (tiempo cumplido)";
+      detalle=`<div class="alerta-box ${restante>0?"azul":"rojo"}">⏱ Reevaluación programada ${restanteTxt}. Al reevaluar, registre PA, FC, Hto y diuresis en «Tendencia Serial» (pestaña Hidratación) para completar el ciclo.</div>`;
+      badgeTxt=restante>0?"En curso: esperando reevaluación":"¡Reevalúe ahora!";
+    }else{
+      estados[2]=2;
+      const ultimo=trasBolo[trasBolo.length-1];
+      estados[3]=ultimo.hto>0?2:1;
+      if(estados[3]===2){
+        estados[4]=2;
+        const refract=detectarChoqueRefractario();
+        detalle=`<div class="alerta-box ${refract.refractario?"rojo":"verde"}">✅ Reevaluación y nuevo hematocrito registrados (${ultimo.hora}). ${refract.refractario?"⚠ Persisten signos de choque — ver «Choque Refractario» en Diagnóstico/Tratamiento.":"Ver la «Recomendación dinámica actual» arriba para el siguiente ajuste de velocidad."} Si administra un nuevo bolo, presione «Registrar bolo» nuevamente para reiniciar el temporizador del ciclo.</div>`;
+        badgeTxt=refract.refractario?"Choque refractario — escalar":"Ciclo completo — ajustar velocidad";
+      }else{
+        estados[3]=1;
+        detalle=`<div class="alerta-box amarillo">Se registró una reevaluación pero falta el nuevo hematocrito. Complételo en «Tendencia Serial» para calcular el ajuste de velocidad.</div>`;
+        badgeTxt="Falta hematocrito de control";
+      }
+    }
+  }
+  stepperEl.innerHTML=renderStepperHTML(pasos,estados);
+  detalleEl.innerHTML=detalle;
+  if(badgeEl)badgeEl.textContent=badgeTxt;
 }
 
 function calcBalance(){
@@ -1746,7 +1974,7 @@ function addTrendRow(){
   const pas=m?parseFloat(m[1]):0,pad=m?parseFloat(m[2]):0;
   const si=(pas>0&&fc>0)?fc/pas:0;
   const pp=(pas>0&&pad>0)?pas-pad:0;
-  trendData.push({hora,hto,plaq,fc,pa,gu,pas,pad,si,pp});
+  trendData.push({hora,hto,plaq,fc,pa,gu,pas,pad,si,pp,ts:Date.now()});
   ["trHora","trHto","trPlaq","trFc","trPa","trGu"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   renderTrend();
 }
@@ -1754,6 +1982,45 @@ function removeTrendRow(i){trendData.splice(i,1);renderTrend();}
 function clearTrend(){
   if(trendData.length&&!confirm("¿Limpiar todos los registros de tendencia?"))return;
   trendData=[];renderTrend();
+}
+// Detección centralizada de choque refractario: se usa tanto en la Tendencia Serial
+// como en el Diagnóstico principal y en las Órdenes/Tratamiento, para que la alerta no
+// dependa de que el usuario esté mirando específicamente la pestaña de tendencias.
+// Cada hallazgo persistente se mapea a la complicación específica que un emergenciólogo
+// consideraría, en vez de agrupar todo en un único mensaje genérico.
+function detectarChoqueRefractario(){
+  const hallazgos=[]; // {texto, complicacion}
+  if(typeof trendData==="undefined")return{refractario:false,hallazgos,motivos:[]};
+  const withSI=trendData.filter(r=>r.si>0);
+  if(withSI.length>=2){
+    const[a,b]=withSI.slice(-2);
+    if(a.si>=1&&b.si>=1)hallazgos.push({texto:"Índice de choque ≥1 persistente en 2 mediciones consecutivas pese al manejo",complicacion:"Choque refractario — considerar hemorragia oculta y necesidad de vasopresores"});
+  }
+  const withPP=trendData.filter(r=>r.pp>0);
+  if(withPP.length>=2){
+    const[a,b]=withPP.slice(-2);
+    if(a.pp<=20&&b.pp<=20)hallazgos.push({texto:"Presión de pulso ≤20 mmHg persistente en mediciones consecutivas",complicacion:"Síndrome de fuga capilar masiva"});
+  }
+  const withGu=trendData.filter(r=>r.gu>0);
+  if(withGu.length>=2){
+    const[a,b]=withGu.slice(-2);
+    if(a.gu<0.5&&b.gu<0.5)hallazgos.push({texto:"Oliguria persistente en mediciones consecutivas pese al aporte de fluidos",complicacion:"Compromiso renal por hipoperfusión sostenida"});
+  }
+  const withHto=trendData.filter(r=>r.hto>0);
+  if(withHto.length>=3){
+    const[a,b,c]=withHto.slice(-3);
+    if(a.hto<b.hto&&b.hto<c.hto)hallazgos.push({texto:"Hematocrito en ascenso sostenido (3 mediciones consecutivas)",complicacion:"Fuga plasmática progresiva / síndrome de fuga capilar"});
+  }
+  // Taquicardia desproporcionada que no mejora con fluidos, en contexto de choque persistente
+  const withFc=trendData.filter(r=>r.fc>0);
+  if(withFc.length>=2&&hallazgos.length>0){
+    const[a,b]=withFc.slice(-2);
+    if(a.fc>120&&b.fc>120)hallazgos.push({texto:"Taquicardia sostenida >120/min pese al manejo, en contexto de choque persistente",complicacion:"Considerar miocarditis asociada al dengue (solicitar ECG/troponina/ecocardiograma)"});
+  }
+  // Fiebre prolongada + leucocitosis en paciente que no mejora: sepsis concomitante
+  const dias=num("diasFiebre"),leuco=num("leucocitos");
+  if(hallazgos.length>0&&dias>=7&&leuco>10)hallazgos.push({texto:`Fiebre prolongada (día ${dias}) con leucocitosis (${leuco}×10³) en paciente que no mejora`,complicacion:"Considerar sepsis/infección bacteriana concomitante (hemocultivo, lactato, foco infeccioso)"});
+  return{refractario:hallazgos.length>0,hallazgos,motivos:hallazgos.map(h=>h.texto)};
 }
 function renderTrend(){
   const tbody=document.getElementById("trendTbody");
@@ -1791,28 +2058,13 @@ function renderTrend(){
   }
   const lastGu=[...trendData].reverse().find(r=>r.gu>0);
   if(lastGu&&lastGu.gu<0.5)msgs.push({sev:"rojo",txt:`🚨 Gasto urinario más reciente (${lastGu.gu} mL/kg/h) — OLIGURIA`});
-  // Fracaso de reanimación: signos de choque que NO mejoran en mediciones consecutivas
-  const withSI=trendData.filter(r=>r.si>0);
-  if(withSI.length>=2){
-    const[a,b]=withSI.slice(-2);
-    if(a.si>=1&&b.si>=1)msgs.push({sev:"rojo",txt:"🚨 FRACASO DE REANIMACIÓN: índice de choque persiste ≥1 en 2 mediciones consecutivas pese al manejo. Considerar: sangrado oculto, miocarditis, sepsis asociada, choque refractario. Reevaluar esquema de fluidos."});
-  }
-  const withPP=trendData.filter(r=>r.pp>0);
-  if(withPP.length>=2){
-    const[a,b]=withPP.slice(-2);
-    if(a.pp<20&&b.pp<20)msgs.push({sev:"rojo",txt:"🚨 Presión de pulso persiste <20 mmHg en mediciones consecutivas — respuesta a la reanimación posiblemente inadecuada."});
-  }
-  const withGuSeq=trendData.filter(r=>r.gu>0);
-  if(withGuSeq.length>=2){
-    const[a,b]=withGuSeq.slice(-2);
-    if(a.gu<0.5&&b.gu<0.5)msgs.push({sev:"rojo",txt:"🚨 Oliguria persistente en mediciones consecutivas pese al aporte de fluidos."});
-  }
-  if(withHto.length>=3){
-    const[a,b,c]=withHto.slice(-3);
-    if(a.hto<b.hto&&b.hto<c.hto)msgs.push({sev:"rojo",txt:"🚨 Hematocrito en ascenso sostenido (3 mediciones consecutivas) — fuga plasmática activa/progresiva pese al manejo."});
-  }
+  // Fracaso de reanimación / choque refractario (lógica centralizada, ver detectarChoqueRefractario)
+  const refract=detectarChoqueRefractario();
+  refract.hallazgos.forEach(h=>msgs.push({sev:"rojo",txt:`🚨 ${h.texto} → <i>${h.complicacion}</i>`}));
+  if(refract.refractario)msgs.push({sev:"rojo",txt:"🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial. Ver complicaciones específicas señaladas arriba. Considerar soporte vasopresor e ingreso/escalamiento a UCI."});
   if(alertBox)alertBox.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
   calcOMSFluidos();
+  if(typeof renderCicloOMS==="function")renderCicloOMS();
   const chartWrap=document.getElementById("trendChartWrap");
   if(chartWrap){
     if(withHto.length>=2||withPlaq.length>=2){
@@ -1889,11 +2141,19 @@ document.addEventListener("DOMContentLoaded",()=>{
     const p=document.getElementById("peso")?.value;
     if(p&&!document.getElementById("hidPeso").value)document.getElementById("hidPeso").value=p;
   });
+  if(typeof renderCicloOMS==="function")renderCicloOMS();
   // Autoguardado local periódico (solo mientras la sesión esté activa)
   setInterval(()=>{
     const app=document.getElementById("appScreen");
     if(app&&app.style.display!=="none")guardarBorrador(false);
   },60000);
+  // Validación fisiológica en tiempo real (feedback inmediato, no solo al evaluar)
+  document.addEventListener("input",(e)=>{
+    if(e.target&&e.target.id){
+      if(LIMITES_FISIOLOGICOS[e.target.id])validarCampoFisiologico(e.target.id);
+      if(e.target.id==="tensionArterial")validarTAFisiologica();
+    }
+  });
 });</script>
 </body>
 </html>
