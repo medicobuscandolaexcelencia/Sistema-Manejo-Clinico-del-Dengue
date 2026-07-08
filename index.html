@@ -328,8 +328,8 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Peso (kg)</label><input type="number" id="peso" placeholder="kg" min="1" max="300"></div>
  <div class="form-group"><label>Días de fiebre</label><input type="number" id="diasFiebre" placeholder="Días" min="0" max="21"></div>
  <div class="form-group"><label>Temperatura (°C)</label><input type="number" id="temperatura" placeholder="38.5" step="0.1"></div>
- <div class="form-group"><label>T.A (mmHg)</label><input type="text" id="tensionArterial" placeholder="120/80"></div>
- <div class="form-group"><label>FC (x min)</label><input type="number" id="frecCard" placeholder="80"></div>
+ <div class="form-group"><label>T.A (mmHg)</label><input type="text" id="tensionArterial" placeholder="120/80" oninput="calcHemodinamia()"></div>
+ <div class="form-group"><label>FC (x min)</label><input type="number" id="frecCard" placeholder="80" oninput="calcHemodinamia()"></div>
  <div class="form-group"><label>FR (x min)</label><input type="number" id="frecResp" placeholder="18"></div>
  <div class="form-group"><label>SpO₂ (%)</label><input type="number" id="spo2" placeholder="98"></div>
  <div class="form-group"><label>Hematocrito (%)</label><input type="number" id="hematocrito" placeholder="%"></div>
@@ -337,6 +337,28 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Leucocitos (×10³)</label><input type="number" id="leucocitos" placeholder="miles" step="0.1"></div>
  <div class="form-group"><label>Zona endémica (últimos 14d)</label>
  <select id="viaje"><option value="si">Sí</option><option value="no">No</option></select>
+ </div>
+ <div class="section-subtitle" style="grid-column:1/-1;color:#9F1239">🩺 Evaluación Hemodinámica (perfusión / choque)</div>
+ <div class="form-group"><label>Llenado capilar</label>
+ <select id="llenadoCapilar" onchange="calcHemodinamia()"><option value="">Seleccionar</option><option value="normal">&lt;2 seg (normal)</option><option value="prolongado">≥2 seg (prolongado)</option></select>
+ </div>
+ <div class="form-group"><label>Pulsos periféricos</label>
+ <select id="pulsosPerif" onchange="calcHemodinamia()"><option value="">Seleccionar</option><option value="normales">Normales</option><option value="debiles">Débiles / filiformes</option><option value="ausentes">Ausentes</option></select>
+ </div>
+ <div class="form-group"><label>Extremidades</label>
+ <select id="extremidades" onchange="calcHemodinamia()"><option value="">Seleccionar</option><option value="calientes">Calientes, bien perfundidas</option><option value="frias">Frías / moteadas / cianóticas</option></select>
+ </div>
+ <div class="form-group"><label>Estado mental</label>
+ <select id="estadoMental" onchange="calcHemodinamia()"><option value="">Seleccionar</option><option value="alerta">Alerta</option><option value="letargico">Letárgico / irritable</option><option value="inconsciente">Inconsciente / obnubilado</option></select>
+ </div>
+ <div class="form-group"><label>¿Cedió la fiebre?</label>
+ <select id="feverCedio" onchange="calcHemodinamia()"><option value="no">No / persiste</option><option value="si">Sí</option></select>
+ </div>
+ <div class="form-group"><label>Horas desde defervescencia</label><input type="number" id="horasDefervescencia" placeholder="horas" min="0" max="240" oninput="calcHemodinamia()"></div>
+ <div class="form-group span2" id="hemoCalcBox" style="background:var(--gris-bg);border-radius:8px;padding:10px 12px;font-size:.74rem;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+ <span>💓 <b>Índice de Choque (FC/PAS):</b> <span id="shockIndexVal">—</span></span>
+ <span>📏 <b>Presión diferencial:</b> <span id="pulsePressureVal">—</span></span>
+ <span id="hemoAlertText" style="font-weight:700"></span>
  </div>
  <div class="form-group span2"><label>APP / Antecedentes relevantes</label><textarea id="antecedentes" placeholder="Antecedentes patológicos personales, alergias, medicación actual..."></textarea></div>
  <div class="form-group span2"><label>Observaciones clínicas adicionales</label><textarea id="observaciones" placeholder="Examen físico, hallazgos relevantes..."></textarea></div>
@@ -427,6 +449,27 @@ textarea{resize:vertical;min-height:70px}
      <div class="form-group"><label>Fecha inicio seguim.</label><input type="date" id="hidFecha"></div>
      <div class="form-group"><label>Hora inicio</label><input type="time" id="hidHora"></div>
     </div>
+   </div>
+  </div>
+
+  <!-- CALCULADORA OMS POR GRUPO -->
+  <div class="card">
+   <div class="card-header hidra">
+    <div class="card-icon hidra">🧮</div>
+    <h2>Calculadora de Líquidos OMS/OPS 2020</h2>
+    <span class="numero">Por grupo A/B/C</span>
+   </div>
+   <div class="card-body">
+    <div class="form-grid" style="margin-bottom:12px">
+     <div class="form-group"><label>Grupo de manejo</label>
+      <select id="omsGrupo" onchange="calcOMSFluidos()">
+       <option value="A">Grupo A — Ambulatorio (DSSA)</option>
+       <option value="B">Grupo B — Hospitalización (DCSA)</option>
+       <option value="C">Grupo C — Choque / UCI (DG)</option>
+      </select>
+     </div>
+    </div>
+    <div id="omsFluidosResult"><div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div></div>
    </div>
   </div>
 
@@ -551,6 +594,14 @@ textarea{resize:vertical;min-height:70px}
      </div>
     </div>
     <div id="alertaBalance"></div>
+    <div class="section-subtitle" style="margin-top:12px">🌊 Signos de Sobrehidratación</div>
+    <div class="sintomas-grid">
+     <label class="sintoma-item" onclick="toggleSobrehid(this)"><div class="check-box">✓</div><span>Crepitantes / estertores</span></label>
+     <label class="sintoma-item" onclick="toggleSobrehid(this)"><div class="check-box">✓</div><span>Aumento de peso &gt;5%</span></label>
+     <label class="sintoma-item" onclick="toggleSobrehid(this)"><div class="check-box">✓</div><span>Derrame pleural</span></label>
+     <label class="sintoma-item" onclick="toggleSobrehid(this)"><div class="check-box">✓</div><span>Edema / disnea</span></label>
+    </div>
+    <div id="alertaSobrehid" style="margin-top:8px"></div>
    </div>
   </div>
 
@@ -636,6 +687,37 @@ textarea{resize:vertical;min-height:70px}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
      <div id="regResumen" style="font-size:.72rem;color:var(--texto-suave)"></div>
      <button class="btn-reset-hid" onclick="clearRegistros()">🗑 Limpiar registros</button>
+    </div>
+   </div>
+  </div>
+
+  <!-- TENDENCIA SERIAL HTO / PLAQUETAS / SV -->
+  <div class="card">
+   <div class="card-header balance">
+    <div class="card-icon balance">📈</div>
+    <h2>Tendencia Serial (Hto / Plaquetas / SV)</h2>
+    <span class="numero" id="trendCount">0 registros</span>
+   </div>
+   <div class="card-body">
+    <div class="flujo-input-row">
+     <div class="form-group"><label>Hora</label><input type="time" id="trHora"></div>
+     <div class="form-group"><label>Hto (%)</label><input type="number" id="trHto" placeholder="%"></div>
+     <div class="form-group"><label>Plaquetas (×10³)</label><input type="number" id="trPlaq" placeholder="miles"></div>
+     <div class="form-group"><label>FC</label><input type="number" id="trFc" placeholder="x min"></div>
+     <div class="form-group"><label>PA</label><input type="text" id="trPa" placeholder="120/80"></div>
+     <div class="form-group"><label>GU (mL/kg/h)</label><input type="number" id="trGu" placeholder="mL/kg/h" step="0.1"></div>
+     <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn-add-diuresis" onclick="addTrendRow()">➕ Agregar</button></div>
+    </div>
+    <div style="overflow-x:auto">
+     <table class="diuresis-table">
+      <thead><tr><th>Hora</th><th>Hto</th><th>Plaq</th><th>FC</th><th>PA</th><th>GU</th><th></th></tr></thead>
+      <tbody id="trendTbody"><tr id="trendEmptyRow"><td colspan="7" style="text-align:center;color:var(--texto-suave);padding:20px;font-size:.75rem">Sin registros aún. Ingrese datos seriados para detectar tendencias.</td></tr></tbody>
+     </table>
+    </div>
+    <div id="trendAlert" style="margin-top:10px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+     <div id="trendResumen" style="font-size:.72rem;color:var(--texto-suave)"></div>
+     <button class="btn-reset-hid" onclick="clearTrend()">🗑 Limpiar</button>
     </div>
    </div>
   </div>
@@ -781,28 +863,81 @@ return{grales,alarmas,graves,comorbilidades};
 }
 function val(id){return document.getElementById(id)?.value?.trim()||"";}
 function num(id){return parseFloat(val(id))||0;}
-function clasificar(grales,alarmas,graves,comorbilidades){
-if(graves.length>0)return"DG";
+function parseTA(){
+const ta=val("tensionArterial");
+const m=ta.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
+if(!m)return{pas:0,pad:0};
+return{pas:parseFloat(m[1]),pad:parseFloat(m[2])};
+}
+// Índice de Choque (FC/PAS) y presión diferencial (PAS-PAD), con detección de choque
+// compensado / oculto: un paciente puede tener PAS "normal" y aun así estar en choque
+// si la presión diferencial se estrecha, hay taquicardia relativa, o hay mala perfusión
+// periférica. Estos signos deben pesar tanto o más que la PA aislada (ver auditoría clínica).
+function calcHemodinamia(){
+const{pas,pad}=parseTA();
+const fc=num("frecCard");
+const siEl=document.getElementById("shockIndexVal");
+const ppEl=document.getElementById("pulsePressureVal");
+const alertEl=document.getElementById("hemoAlertText");
+let shockIndex=0,pulsePressure=0;
+if(pas>0&&fc>0){
+shockIndex=fc/pas;
+if(siEl)siEl.textContent=shockIndex.toFixed(2)+(shockIndex>=1.3?" 🔴 choque establecido":shockIndex>=1?" 🟠 alto riesgo":shockIndex>=0.9?" 🟡 sospecha de choque":shockIndex>=0.7?" 🟡 vigilancia":" 🟢 normal");
+}else if(siEl)siEl.textContent="—";
+if(pas>0&&pad>0){
+pulsePressure=pas-pad;
+if(ppEl)ppEl.textContent=pulsePressure+" mmHg"+(pulsePressure<20?" 🔴 sospecha de choque por dengue":pulsePressure<=40?" 🟡 vigilancia":" 🟢 normal");
+}else if(ppEl)ppEl.textContent="—";
+const motivos=[];
+if(shockIndex>=0.9)motivos.push("Índice de choque elevado");
+if(pulsePressure>0&&pulsePressure<20)motivos.push("Presión diferencial estrecha (<20 mmHg)");
+if(val("llenadoCapilar")==="prolongado")motivos.push("Llenado capilar ≥2 seg");
+if(val("pulsosPerif")==="debiles")motivos.push("Pulsos periféricos débiles");
+if(val("pulsosPerif")==="ausentes")motivos.push("Pulsos periféricos ausentes");
+if(val("extremidades")==="frias")motivos.push("Extremidades frías / moteadas");
+if(val("estadoMental")==="letargico")motivos.push("Letargia / irritabilidad");
+if(val("estadoMental")==="inconsciente")motivos.push("Alteración grave del estado de conciencia");
+// Choque oculto/compensado: taquicardia con PAS "normal" pero presión diferencial ya estrecha
+if(fc>100&&pas>=90&&pulsePressure>0&&pulsePressure<30&&!motivos.includes("Presión diferencial estrecha (<20 mmHg)"))motivos.push("Posible choque compensado/oculto (taquicardia + PA aparentemente normal + PP estrecha)");
+if(alertEl){
+alertEl.innerHTML=motivos.length?("⚠ "+motivos.join(" · ")):"";
+alertEl.style.color=motivos.length?"#C1121F":"";
+}
+return{shockIndex,pulsePressure,pas,pad,motivos};
+}
+function clasificar(grales,alarmas,graves,comorbilidades,hemo){
+hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
+// Choque descompensado / signos de gravedad hemodinámica -> DG aunque no se hayan marcado
+// manualmente síntomas graves. Esto evita que un paciente en choque compensado quede
+// clasificado como DSSA solo porque nadie marcó una casilla.
+const choqueGrave=hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<20)||val("pulsosPerif")==="ausentes"||val("estadoMental")==="inconsciente"||val("extremidades")==="frias"&&val("pulsosPerif")==="debiles";
+if(graves.length>0||choqueGrave)return"DG";
 if(alarmas.length>0||comorbilidades.length>0)return"DCSA";
+// Cualquier signo hemodinámico temprano (choque compensado/oculto) obliga a hospitalizar
+// y vigilar como mínimo DCSA, aunque no se haya marcado ningún signo de alarma clásico.
+if(hemo.motivos.length>0)return"DCSA";
 if(grales.length>=2)return"DSSA";
 return"DSSA";
 }
 function evaluar(){
 const{grales,alarmas,graves,comorbilidades}=getActivos();
-const clase=clasificar(grales,alarmas,graves,comorbilidades);
+const hemo=calcHemodinamia();
+const clase=clasificar(grales,alarmas,graves,comorbilidades,hemo);
 const peso=num("peso");
 const plaq=num("plaquetas");
 const hema=num("hematocrito");
 const spo2=num("spo2");
 const dias=num("diasFiebre");
-renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias);
-renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves);
+const sangradoActivo=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
+renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo);
+renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo);
 autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas);
 renderPlantilla(clase,grales,alarmas,graves,comorbilidades,peso,plaq,hema,spo2,dias);
 document.getElementById("cardDx").classList.add("animated");
 document.getElementById("cardTx").classList.add("animated");
 }
-function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias){
+function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo){
+hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
 const labels={DSSA:["badge-dssa","✅ Dengue Sin Signos de Alarma"],DCSA:["badge-dcsa","⚠️ Dengue Con Signos de Alarma"],DG:["badge-dg","🚨 Dengue Grave"]};
 const[cls,label]=labels[clase];
 const nombre=`${val("apellidos")} ${val("nombres")}`.trim()||"Paciente";
@@ -812,9 +947,20 @@ const info=[nombre,edad,sexo,val("cedula")].filter(Boolean).join(" · ");
 let html=`<div class="result-content">`;
 html+=`<div class="clasificacion-badge ${cls}">${label}</div>`;
 if(info){html+=`<div style="font-size:.75rem;color:var(--texto-suave);margin-bottom:10px">👤 ${info}</div>`;}
-if(plaq>0&&plaq<100){html+=`<div class="alerta-box ${plaq<20?"rojo":"amarillo"}">⚠ Plaquetas: ${plaq}×10³ — ${plaq<20?"TRANSFUSIÓN urgente":"Monitoreo estricto"}</div>`;}
+const sangradoActivoDx=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
+if(plaq>0&&plaq<100){
+if(plaq<20&&sangradoActivoDx){html+=`<div class="alerta-box rojo">🩸 Plaquetas: ${plaq}×10³ con sangrado activo — TRANSFUSIÓN indicada</div>`;}
+else if(plaq<20){html+=`<div class="alerta-box amarillo">⚠ Plaquetas: ${plaq}×10³ (severa) SIN sangrado activo — la transfusión NO está indicada solo por la cifra; vigilancia clínica estricta</div>`;}
+else{html+=`<div class="alerta-box amarillo">⚠ Plaquetas: ${plaq}×10³ — Monitoreo estricto</div>`;}
+}
 if(hema>0&&hema>45){html+=`<div class="alerta-box amarillo">⚠ Hemoconcentración: Hto ${hema}% — Vigilar fuga capilar</div>`;}
 if(spo2>0&&spo2<94){html+=`<div class="alerta-box rojo">🚨 SpO₂ ${spo2}% — Soporte O₂ inmediato</div>`;}
+if(hemo.shockIndex>0||hemo.pulsePressure>0){
+const siTxt=hemo.shockIndex>0?`ÍC: ${hemo.shockIndex.toFixed(2)}`:"ÍC: —";
+const ppTxt=hemo.pulsePressure>0?`PP: ${hemo.pulsePressure} mmHg`:"PP: —";
+const riesgo=hemo.shockIndex>=1||( hemo.pulsePressure>0&&hemo.pulsePressure<20);
+html+=`<div class="alerta-box ${riesgo?"rojo":"azul"}">💓 ${siTxt} · ${ppTxt}${hemo.motivos.length?` — ${hemo.motivos.join(", ")}`:""}</div>`;
+}
 const addSec=(titulo,items,color)=>{
 if(!items.length)return;
 html+=`<div class="result-section"><div class="result-section-title">${titulo}</div>`;
@@ -825,16 +971,24 @@ addSec("Síntomas presentes",grales,"#06402B");
 addSec("Signos de alarma",alarmas,"#C1121F");
 addSec("Signos graves",graves,"#7C3AED");
 addSec("Comorbilidades / Factores de riesgo",comorbilidades,"#2D6A4F");
-const faseMap={0:"Incubación/Febril temprana",1:"Febril",2:"Febril",3:"Febril",4:"Crítica",5:"Crítica",6:"Recuperación",7:"Recuperación"};
-const fase=faseMap[Math.min(dias,7)]||"Febril";
-html+=`<div class="alerta-box azul">📅 Día ${dias||"?"} de enfermedad — Fase: <b>${fase}</b></div>`;
+const feverCedioDx=val("feverCedio");
+const horasDefervDx=num("horasDefervescencia");
+let fase,faseNota;
+if(feverCedioDx==="si"){
+if(horasDefervDx<=48){fase="Crítica";faseNota="Fase de mayor riesgo de fuga plasmática y choque: 24–48 h posteriores a la caída de la fiebre, independientemente del día calendario.";}
+else{fase="Recuperación";faseNota="Han pasado más de 48 h desde que cedió la fiebre. Vigilar signos de sobrehidratación.";}
+}else{
+fase="Febril";
+faseNota="La fase crítica NO depende del número de días: comienza con la defervescencia (caída de la fiebre), que puede ocurrir en el día 3 o en el día 8. Reevalúe apenas ceda la fiebre.";
+}
+html+=`<div class="alerta-box ${fase==="Crítica"?"rojo":"azul"}">📅 Día ${dias||"?"} de enfermedad — Fase: <b>${fase}</b><br><span style="font-weight:400">${faseNota}</span></div>`;
 html+="</div>";
 document.getElementById("dxContent").innerHTML=html;
 }
 function trat(tipo,titulo,contenido){
 return`<div class="trat-card ${tipo}"><div class="trat-title">${titulo}</div><div class="trat-body">${contenido}</div></div>`;
 }
-function renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves){
+function renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo){
 let html=`<div class="result-content">`;
 const volPeso=peso>0?` (${(peso*10).toFixed(0)}–${(peso*20).toFixed(0)} mL/día para ${peso}kg)`:""
 if(clase==="DSSA"){
@@ -864,8 +1018,9 @@ html+=trat("","💧 Hidratación IV",`<ul>
 <li>Reducir velocidad progresivamente al mejorar</li>
 <li>Hematocrito de control cada 4–6h</li>
 </ul>`);
-if(plaq>0&&plaq<20){html+=trat("urgente","🩸 Transfusión Plaquetaria Urgente",`Plaquetas <20×10³ con sangrado activo. Considerar concentrado plaquetario.`);}
-else if(plaq>0&&plaq<50){html+=trat("advertencia","🩸 Vigilancia Plaquetaria",`Plaquetas ${plaq}×10³. Control estricto. Reserva transfusional disponible.`);}
+if(plaq>0&&plaq<20&&sangradoActivo){html+=trat("urgente","🩸 Transfusión Plaquetaria Urgente",`Plaquetas &lt;20×10³ CON sangrado activo. Transfusión indicada. Considerar concentrado plaquetario.`);}
+else if(plaq>0&&plaq<20){html+=trat("advertencia","🩸 Plaquetopenia Severa — Transfusión NO indicada por cifra aislada",`Plaquetas ${plaq}×10³ sin sangrado activo evidente. En dengue la transfusión profiláctica por cifra baja <b>no está indicada</b>. Vigilancia clínica estricta, reposo absoluto, evitar inyecciones IM y procedimientos invasivos innecesarios. Transfundir solo ante sangrado activo significativo, hemorragia digestiva/intracraneal, CID o necesidad de procedimiento invasivo urgente.`);}
+else if(plaq>0&&plaq<50){html+=trat("advertencia","🩸 Vigilancia Plaquetaria",`Plaquetas ${plaq}×10³. Control estricto. Transfusión NO indicada por cifra aislada; reservar para sangrado activo significativo.`);}
 html+=trat("","📊 Monitoreo",`<ul>
 <li>Signos vitales c/1–2h</li>
 <li>BHC c/6–8h (hematocrito, plaquetas)</li>
@@ -885,7 +1040,8 @@ html+=trat("urgente","⚡ Choque — Resucitación Inmediata",`<ul>
 </ul>`);
 }
 if(spo2>0&&spo2<94){html+=trat("urgente","🫁 Soporte Respiratorio",`SpO₂: ${spo2}%. Oxigenoterapia inmediata. Preparar para ventilación mecánica.`);}
-if(plaq>0&&plaq<20||graves.includes("Sangrado grave")){html+=trat("urgente","🩸 Hemorragia / Transfusión",`Plaquetas ${plaq}×10³ con sangrado grave. Transfusión urgente. Considerar PFC si coagulopatía.`);}
+if(sangradoActivo||graves.includes("Sangrado grave")){html+=trat("urgente","🩸 Hemorragia / Transfusión",`Sangrado activo/grave documentado${plaq>0?` (plaquetas ${plaq}×10³)`:""}. Transfusión urgente. Considerar PFC/crioprecipitado si coagulopatía o CID.`);}
+else if(plaq>0&&plaq<20){html+=trat("advertencia","🩸 Plaquetopenia Severa sin sangrado activo",`Plaquetas ${plaq}×10³. La transfusión NO está indicada solo por la cifra aislada. Vigilancia estricta y evitar procedimientos invasivos no esenciales.`);}
 html+=trat("urgente","👁️ Monitoreo UCI",`<ul>
 <li>Signos vitales c/15–30 min</li>
 <li>BHC, coagulación y función orgánica c/2–4h</li>
@@ -1074,8 +1230,11 @@ let registros=[];
 function calcHidMetas(){
   const peso=parseFloat(document.getElementById("hidPeso").value)||0;
   const clase=document.getElementById("hidClase").value;
+  const omsSel=document.getElementById("omsGrupo");
+  if(omsSel){omsSel.value=clase==="DSSA"?"A":clase==="DCSA"?"B":"C";}
   if(!peso){
     ["metaMinVol","metaMaxVol","metaDiuresisMin"].forEach(id=>document.getElementById(id).textContent="—");
+    calcOMSFluidos();
     return;
   }
   let minVol,maxVol,duMin;
@@ -1093,6 +1252,38 @@ function calcHidMetas(){
   const insens=document.getElementById("egr_insens");
   if(insens&&(!insens.value||insens.value==="0"))insens.value=Math.round(peso*10);
   calcBalance();
+  calcOMSFluidos();
+}
+
+function calcOMSFluidos(){
+  const peso=parseFloat(document.getElementById("hidPeso")?.value)||0;
+  const grupo=document.getElementById("omsGrupo")?.value||"A";
+  const box=document.getElementById("omsFluidosResult");
+  if(!box)return;
+  if(!peso){box.innerHTML=`<div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div>`;return;}
+  let html="";
+  if(grupo==="A"){
+    const min=Math.round(peso*60),max=Math.round(peso*80);
+    html=`<div class="alerta-box verde">🏠 <b>Grupo A (vía oral):</b> ${min}–${max} mL/día (60–80 mL/kg/día) fraccionados en tomas frecuentes.<br>Reevaluar diariamente: tolerancia oral, diuresis y aparición de signos de alarma.</div>`;
+  }else if(grupo==="B"){
+    const r1=Math.round(peso*5),r1b=Math.round(peso*7);
+    const r2=Math.round(peso*3),r2b=Math.round(peso*5);
+    const r3=Math.round(peso*2),r3b=Math.round(peso*3);
+    html=`<div class="alerta-box amarillo">🏥 <b>Grupo B (IV):</b><br>
+1) <b>${r1}–${r1b} mL/h</b> (5–7 mL/kg/h) × 1–2 horas → reevaluar PA, FC, Hto, GU.<br>
+2) Si mejora clínicamente: reducir a <b>${r2}–${r2b} mL/h</b> (3–5 mL/kg/h) × 2–4 horas → reevaluar.<br>
+3) Si continúa mejorando: reducir a <b>${r3}–${r3b} mL/h</b> (2–3 mL/kg/h), ajustar según respuesta.<br>
+<span style="font-weight:700">Reevaluar en cada paso: PA, FC, Hto, diuresis. Si empeora, escalar a manejo de Grupo C.</span></div>`;
+  }else{
+    const bolo1=Math.round(peso*10),bolo2=Math.round(peso*20);
+    const p10=Math.round(peso*10),p7=Math.round(peso*7),p5=Math.round(peso*5),p3=Math.round(peso*3);
+    html=`<div class="alerta-box rojo">🚨 <b>Grupo C — Choque (IV urgente):</b><br>
+1) Bolo inicial: <b>${bolo1}–${bolo2} mL</b> (10–20 mL/kg) en 15–30 minutos.<br>
+2) Reevaluar inmediatamente. Si mejora: continuar con ${p10} mL/h (10 mL/kg/h) × 1h, luego reducir progresivamente a ${p7}, ${p5}, ${p3} mL/h (7→5→3 mL/kg/h) según respuesta.<br>
+3) Si NO mejora tras el primer bolo: repetir bolo, considerar coloide, y evaluar vasopresores / UCI.<br>
+<span style="font-weight:700">Reevaluación continua: PA, FC, llenado capilar, Hto, diuresis cada 15–30 min.</span></div>`;
+  }
+  box.innerHTML=html;
 }
 
 function calcBalance(){
@@ -1137,7 +1328,18 @@ function calcBalance(){
   // sync orina total with GU field
   const orTotal=parseFloat(document.getElementById("egr_orina")?.value)||0;
   if(orTotal>0){document.getElementById("guVolumen").value=orTotal;calcGastoUrinario();}
+  // Signos de sobrehidratación (tan peligrosa como la hipovolemia en dengue)
+  const aSob=document.getElementById("alertaSobrehid");
+  if(aSob){
+    const sobreSignos=[...document.querySelectorAll("#tabHidratacion .sintoma-item.active")].map(x=>x.querySelector("span").textContent);
+    if(sobreSignos.length>0){
+      aSob.innerHTML=`<div class="alerta-box rojo">🌊 Signos de SOBREHIDRATACIÓN: ${sobreSignos.join(", ")}${bal>500?` + balance positivo (+${bal.toLocaleString()} mL)`:""}. Considerar reducir/detener aporte IV, evaluar diurético si está indicado, soporte respiratorio.</div>`;
+    }else{
+      aSob.innerHTML="";
+    }
+  }
 }
+function toggleSobrehid(el){el.classList.toggle("active");calcBalance();}
 
 function calcGastoUrinario(){
   const vol=parseFloat(document.getElementById("guVolumen").value)||0;
@@ -1253,6 +1455,59 @@ function deleteRegistro(i){
 function clearRegistros(){
   if(registros.length&&!confirm("¿Eliminar todos los registros de diuresis?"))return;
   registros=[];renderRegistros();
+}
+
+let trendData=[];
+function addTrendRow(){
+  const hora=val("trHora")||new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"});
+  const hto=num("trHto"),plaq=num("trPlaq"),fc=num("trFc"),pa=val("trPa"),gu=num("trGu");
+  if(!hto&&!plaq&&!fc&&!pa&&!gu)return;
+  trendData.push({hora,hto,plaq,fc,pa,gu});
+  ["trHora","trHto","trPlaq","trFc","trPa","trGu"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  renderTrend();
+}
+function removeTrendRow(i){trendData.splice(i,1);renderTrend();}
+function clearTrend(){
+  if(trendData.length&&!confirm("¿Limpiar todos los registros de tendencia?"))return;
+  trendData=[];renderTrend();
+}
+function renderTrend(){
+  const tbody=document.getElementById("trendTbody");
+  const countEl=document.getElementById("trendCount");
+  const alertBox=document.getElementById("trendAlert");
+  if(!tbody)return;
+  if(trendData.length===0){
+    tbody.innerHTML=`<tr id="trendEmptyRow"><td colspan="7" style="text-align:center;color:var(--texto-suave);padding:20px;font-size:.75rem">Sin registros aún. Ingrese datos seriados para detectar tendencias.</td></tr>`;
+    if(countEl)countEl.textContent="0 registros";
+    if(alertBox)alertBox.innerHTML="";
+    return;
+  }
+  if(countEl)countEl.textContent=trendData.length+" registro"+(trendData.length===1?"":"s");
+  tbody.innerHTML=trendData.map((r,i)=>`<tr><td>${r.hora}</td><td>${r.hto||"—"}</td><td>${r.plaq||"—"}</td><td>${r.fc||"—"}</td><td>${r.pa||"—"}</td><td>${r.gu||"—"}</td><td><button class="hid-row-btn" onclick="removeTrendRow(${i})">✖</button></td></tr>`).join("");
+  // Análisis de tendencia: la combinación ↑Hto + ↓Plaquetas es la firma biológica del
+  // dengue complicado; un aumento de Hto ≥20% sobre el basal es criterio OMS de fuga
+  // plasmática significativa.
+  const msgs=[];
+  const withHto=trendData.filter(r=>r.hto>0);
+  const withPlaq=trendData.filter(r=>r.plaq>0);
+  if(withHto.length>=2){
+    const first=withHto[0].hto,last=withHto[withHto.length-1].hto;
+    const delta=(last-first)/first*100;
+    if(delta>=20)msgs.push({sev:"rojo",txt:`🔴 Hematocrito aumentó ${delta.toFixed(0)}% respecto al basal (${first}%→${last}%) — criterio OMS de fuga plasmática significativa (≥20%)`});
+    else if(last>first)msgs.push({sev:"amarillo",txt:`🟡 Hematocrito en ascenso (${first}%→${last}%) — vigilar fuga capilar`});
+  }
+  if(withPlaq.length>=2){
+    const first=withPlaq[0].plaq,last=withPlaq[withPlaq.length-1].plaq;
+    if(last<first)msgs.push({sev:"amarillo",txt:`🟡 Plaquetas en descenso (${first}→${last} ×10³)`});
+  }
+  if(withHto.length>=2&&withPlaq.length>=2){
+    const htoUp=withHto[withHto.length-1].hto>withHto[0].hto;
+    const plaqDown=withPlaq[withPlaq.length-1].plaq<withPlaq[0].plaq;
+    if(htoUp&&plaqDown)msgs.push({sev:"rojo",txt:"🚨 Patrón combinado ↑Hematocrito + ↓Plaquetas — firma biológica clásica del dengue complicado. Reevaluar clasificación y considerar escalar manejo."});
+  }
+  const lastGu=[...trendData].reverse().find(r=>r.gu>0);
+  if(lastGu&&lastGu.gu<0.5)msgs.push({sev:"rojo",txt:`🚨 Gasto urinario más reciente (${lastGu.gu} mL/kg/h) — OLIGURIA`});
+  if(alertBox)alertBox.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
