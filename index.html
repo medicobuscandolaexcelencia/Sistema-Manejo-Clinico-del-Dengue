@@ -80,6 +80,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--t
 .form-group.span2{grid-column:1/-1}
 label{font-size:.7rem;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px}
 input,select,textarea{font-family:'Montserrat',sans-serif;font-size:.83rem;padding:8px 11px;border:1.5px solid var(--gris-borde);border-radius:8px;color:var(--texto);background:#fff;transition:border-color .2s,box-shadow .2s;outline:none}
+.quick-select{font-size:.68rem!important;padding:5px 7px!important;margin-bottom:4px;color:var(--texto-suave);border-color:#DCE3EB!important;background:#F8FAFC!important}
 input:focus,select:focus,textarea:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,119,182,.1)}
 textarea{resize:vertical;min-height:70px}
 .sintomas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
@@ -128,6 +129,8 @@ textarea{resize:vertical;min-height:70px}
 .alerta-box.rojo{background:#FFE4E6;border:1px solid #FECDD3;color:#9F1239}
 .alerta-box.amarillo{background:#FEF9C3;border:1px solid #FDE68A;color:#854D0E}
 .alerta-box.azul{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.alerta-box.verde{background:#DCFCE7;border:1px solid #BBF7D0;color:#166534}
+.alerta-box.naranja{background:#FFEDD5;border:1px solid #FED7AA;color:#9A3412}
 .grupo-badge{font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:20px;background:#06402B;color:#fff;margin-left:6px}
 .plantilla-main{max-width:1200px;margin:24px auto;padding:0 16px 60px}
 .plantilla-container{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden}
@@ -270,6 +273,9 @@ textarea{resize:vertical;min-height:70px}
  <input class="login-input" type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
  </div>
  <button class="login-btn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
+ <div style="font-size:.62rem;line-height:1.5;color:var(--texto-suave,#6B7280);text-align:left;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 10px;margin-top:10px">
+ ⚠️ Esta pantalla es una <b>barrera de acceso local</b>, no un sistema de autenticación real: la contraseña se verifica por hash SHA-256 dentro del propio navegador, sin backend ni control de sesiones. No use datos de pacientes reales sin las medidas de protección de datos correspondientes (ver aviso de privacidad al final de la aplicación).
+ </div>
  <div class="login-footer">
  <div class="login-footer-name">Dr. Rhonnie Duarte M.</div>
  <div class="login-footer-sub">Médico General · Autor del Sistema</div>
@@ -294,9 +300,12 @@ textarea{resize:vertical;min-height:70px}
  <span class="autor">Dr. Rhonnie Duarte M.</span>
  <span class="autor-sub">Médico General</span>
  <span class="version">OPS/OMS · Junio 2020</span>
+ <button class="logout-btn" style="background:#0077B6" onclick="guardarBorrador(true)">💾 Guardar local</button>
+ <button class="logout-btn" style="background:#64748B" onclick="borrarBorrador()">🗑️ Borrar local</button>
  <button class="logout-btn" onclick="doLogout()">⏻ Cerrar Sesión</button>
  </div>
  </div>
+ <div id="draftStatus" style="font-size:.62rem;color:var(--texto-suave,#6B7280);text-align:right;padding:0 24px 6px;line-height:1.4"></div>
  </div>
 
  <div class="tabs-bar">
@@ -324,17 +333,39 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Sexo</label>
  <select id="sexo"><option value="">Seleccionar</option><option value="MASCULINO">Masculino</option><option value="FEMENINO">Femenino</option></select>
  </div>
- <div class="form-group"><label>Edad</label><input type="number" id="edad" placeholder="Años" min="0" max="120"></div>
- <div class="form-group"><label>Peso (kg)</label><input type="number" id="peso" placeholder="kg" min="1" max="300"></div>
- <div class="form-group"><label>Días de fiebre</label><input type="number" id="diasFiebre" placeholder="Días" min="0" max="21"></div>
- <div class="form-group"><label>Temperatura (°C)</label><input type="number" id="temperatura" placeholder="38.5" step="0.1"></div>
- <div class="form-group"><label>T.A (mmHg)</label><input type="text" id="tensionArterial" placeholder="120/80" oninput="calcHemodinamia()"></div>
- <div class="form-group"><label>FC (x min)</label><input type="number" id="frecCard" placeholder="80" oninput="calcHemodinamia()"></div>
- <div class="form-group"><label>FR (x min)</label><input type="number" id="frecResp" placeholder="18"></div>
- <div class="form-group"><label>SpO₂ (%)</label><input type="number" id="spo2" placeholder="98"></div>
- <div class="form-group"><label>Hematocrito (%)</label><input type="number" id="hematocrito" placeholder="%"></div>
- <div class="form-group"><label>Plaquetas (×10³)</label><input type="number" id="plaquetas" placeholder="miles"></div>
- <div class="form-group"><label>Leucocitos (×10³)</label><input type="number" id="leucocitos" placeholder="miles" step="0.1"></div>
+ <div class="form-group"><label>Edad</label>
+ <select class="quick-select" onchange="quickFill('edad',this.value)"><option value="">⚡ Selección rápida…</option><option value="1">1</option><option value="2">2</option><option value="5">5</option><option value="8">8</option><option value="12">12</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option></select>
+ <input type="number" id="edad" placeholder="Años" min="0" max="120"></div>
+ <div class="form-group"><label>Peso (kg)</label>
+ <select class="quick-select" onchange="quickFill('peso',this.value)"><option value="">⚡ Selección rápida…</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option></select>
+ <input type="number" id="peso" placeholder="kg" min="1" max="300"></div>
+ <div class="form-group"><label>Días de fiebre</label>
+ <select class="quick-select" onchange="quickFill('diasFiebre',this.value)"><option value="">⚡ Selección rápida…</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+ <input type="number" id="diasFiebre" placeholder="Días" min="0" max="21"></div>
+ <div class="form-group"><label>Temperatura (°C)</label>
+ <select class="quick-select" onchange="quickFill('temperatura',this.value)"><option value="">⚡ Selección rápida…</option><option value="36.5">36.5</option><option value="37">37.0</option><option value="37.5">37.5</option><option value="38">38.0</option><option value="38.5">38.5</option><option value="39">39.0</option><option value="39.5">39.5</option><option value="40">40.0</option><option value="40.5">40.5</option></select>
+ <input type="number" id="temperatura" placeholder="38.5" step="0.1" min="30" max="43"></div>
+ <div class="form-group"><label>T.A (mmHg)</label>
+ <select class="quick-select" onchange="quickFill('tensionArterial',this.value)"><option value="">⚡ Selección rápida…</option><option value="120/80">120/80 (normal)</option><option value="110/70">110/70</option><option value="100/70">100/70</option><option value="100/60">100/60</option><option value="90/60">90/60 (vigilancia)</option><option value="90/50">90/50</option><option value="80/50">80/50 (riesgo)</option><option value="80/40">80/40 (choque)</option><option value="70/40">70/40 (choque)</option></select>
+ <input type="text" id="tensionArterial" placeholder="120/80" oninput="calcHemodinamia()"></div>
+ <div class="form-group"><label>FC (x min)</label>
+ <select class="quick-select" onchange="quickFill('frecCard',this.value)"><option value="">⚡ Selección rápida…</option><option value="60">60</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option><option value="110">110</option><option value="120">120</option><option value="130">130</option><option value="140">140</option><option value="150">150</option><option value="160">160</option></select>
+ <input type="number" id="frecCard" placeholder="80" oninput="calcHemodinamia()" min="20" max="300"></div>
+ <div class="form-group"><label>FR (x min)</label>
+ <select class="quick-select" onchange="quickFill('frecResp',this.value)"><option value="">⚡ Selección rápida…</option><option value="12">12</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="28">28</option><option value="32">32</option><option value="36">36</option></select>
+ <input type="number" id="frecResp" placeholder="18" min="4" max="80"></div>
+ <div class="form-group"><label>SpO₂ (%)</label>
+ <select class="quick-select" onchange="quickFill('spo2',this.value)"><option value="">⚡ Selección rápida…</option><option value="100">100</option><option value="99">99</option><option value="98">98</option><option value="97">97</option><option value="96">96</option><option value="95">95</option><option value="94">94</option><option value="92">92</option><option value="90">90</option><option value="85">85</option><option value="80">80</option></select>
+ <input type="number" id="spo2" placeholder="98" min="0" max="100"></div>
+ <div class="form-group"><label>Hematocrito (%)</label>
+ <select class="quick-select" onchange="quickFill('hematocrito',this.value)"><option value="">⚡ Selección rápida…</option><option value="30">30</option><option value="35">35</option><option value="38">38</option><option value="40">40</option><option value="42">42</option><option value="45">45</option><option value="48">48</option><option value="50">50</option><option value="55">55</option></select>
+ <input type="number" id="hematocrito" placeholder="%" min="10" max="70"></div>
+ <div class="form-group"><label>Plaquetas (×10³)</label>
+ <select class="quick-select" onchange="quickFill('plaquetas',this.value)"><option value="">⚡ Selección rápida…</option><option value="150">150</option><option value="100">100</option><option value="80">80</option><option value="50">50</option><option value="30">30</option><option value="20">20</option><option value="10">10</option><option value="5">5</option></select>
+ <input type="number" id="plaquetas" placeholder="miles" min="0" max="800"></div>
+ <div class="form-group"><label>Leucocitos (×10³)</label>
+ <select class="quick-select" onchange="quickFill('leucocitos',this.value)"><option value="">⚡ Selección rápida…</option><option value="2">2.0</option><option value="3">3.0</option><option value="4">4.0</option><option value="5">5.0</option><option value="7">7.0</option><option value="10">10.0</option><option value="12">12.0</option><option value="15">15.0</option></select>
+ <input type="number" id="leucocitos" placeholder="miles" step="0.1" min="0" max="50"></div>
  <div class="form-group"><label>Zona endémica (últimos 14d)</label>
  <select id="viaje"><option value="si">Sí</option><option value="no">No</option></select>
  </div>
@@ -354,7 +385,9 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>¿Cedió la fiebre?</label>
  <select id="feverCedio" onchange="calcHemodinamia()"><option value="no">No / persiste</option><option value="si">Sí</option></select>
  </div>
- <div class="form-group"><label>Horas desde defervescencia</label><input type="number" id="horasDefervescencia" placeholder="horas" min="0" max="240" oninput="calcHemodinamia()"></div>
+ <div class="form-group"><label>Horas desde defervescencia</label>
+ <select class="quick-select" onchange="quickFill('horasDefervescencia',this.value)"><option value="">⚡ Selección rápida…</option><option value="6">6</option><option value="12">12</option><option value="24">24</option><option value="36">36</option><option value="48">48</option><option value="60">60</option><option value="72">72</option></select>
+ <input type="number" id="horasDefervescencia" placeholder="horas" min="0" max="240" oninput="calcHemodinamia()"></div>
  <div class="form-group span2" id="hemoCalcBox" style="background:var(--gris-bg);border-radius:8px;padding:10px 12px;font-size:.74rem;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
  <span>💓 <b>Índice de Choque (FC/PAS):</b> <span id="shockIndexVal">—</span></span>
  <span>📏 <b>Presión diferencial:</b> <span id="pulsePressureVal">—</span></span>
@@ -392,6 +425,15 @@ textarea{resize:vertical;min-height:70px}
  <span class="numero">Resultado</span>
  </div>
  <div id="txContent"><div class="result-placeholder"><div class="icon">📋</div><p>El plan de tratamiento aparecerá automáticamente tras la evaluación</p></div></div>
+ </div>
+
+ <div class="card full" id="cardOrdenes">
+ <div class="card-header tx">
+ <div class="card-icon tx">📝</div>
+ <h2>Órdenes Médicas Automáticas</h2>
+ <span class="numero"><button class="btn-copy" style="padding:5px 12px;font-size:.68rem" onclick="copyOrdenes()">📋 Copiar</button></span>
+ </div>
+ <div id="ordenesContent"><div class="result-placeholder"><div class="icon">📝</div><p>Las órdenes médicas se generarán automáticamente tras la evaluación</p></div></div>
  </div>
  </div>
  </div>
@@ -438,7 +480,9 @@ textarea{resize:vertical;min-height:70px}
      </div>
     </div>
     <div class="form-grid">
-     <div class="form-group"><label>Peso (kg)</label><input type="number" id="hidPeso" placeholder="kg" min="1" max="300" oninput="calcHidMetas()"></div>
+     <div class="form-group"><label>Peso (kg)</label>
+      <select class="quick-select" onchange="quickFill('hidPeso',this.value)"><option value="">⚡</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option></select>
+      <input type="number" id="hidPeso" placeholder="kg" min="1" max="300" oninput="calcHidMetas()"></div>
      <div class="form-group"><label>Clasificación</label>
       <select id="hidClase" onchange="calcHidMetas()">
        <option value="DSSA">DSSA — Sin alarma</option>
@@ -470,6 +514,10 @@ textarea{resize:vertical;min-height:70px}
      </div>
     </div>
     <div id="omsFluidosResult"><div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+     <button class="btn-add-diuresis" onclick="registrarBolo()">🩹 Registrar bolo / inicio de infusión</button>
+     <span id="boloReminder" style="font-size:.72rem;color:var(--texto-suave)"></span>
+    </div>
    </div>
   </div>
 
@@ -684,6 +732,10 @@ textarea{resize:vertical;min-height:70px}
       </tbody>
      </table>
     </div>
+    <div id="regChartWrap" style="margin-top:12px;display:none">
+     <div class="section-subtitle">📈 Curva de Gasto Urinario (mL/kg/h)</div>
+     <canvas id="regChart" width="600" height="140" style="width:100%;height:140px"></canvas>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
      <div id="regResumen" style="font-size:.72rem;color:var(--texto-suave)"></div>
      <button class="btn-reset-hid" onclick="clearRegistros()">🗑 Limpiar registros</button>
@@ -701,11 +753,21 @@ textarea{resize:vertical;min-height:70px}
    <div class="card-body">
     <div class="flujo-input-row">
      <div class="form-group"><label>Hora</label><input type="time" id="trHora"></div>
-     <div class="form-group"><label>Hto (%)</label><input type="number" id="trHto" placeholder="%"></div>
-     <div class="form-group"><label>Plaquetas (×10³)</label><input type="number" id="trPlaq" placeholder="miles"></div>
-     <div class="form-group"><label>FC</label><input type="number" id="trFc" placeholder="x min"></div>
-     <div class="form-group"><label>PA</label><input type="text" id="trPa" placeholder="120/80"></div>
-     <div class="form-group"><label>GU (mL/kg/h)</label><input type="number" id="trGu" placeholder="mL/kg/h" step="0.1"></div>
+     <div class="form-group"><label>Hto (%)</label>
+      <select class="quick-select" onchange="quickFill('trHto',this.value)"><option value="">⚡</option><option value="35">35</option><option value="38">38</option><option value="40">40</option><option value="42">42</option><option value="45">45</option><option value="48">48</option><option value="50">50</option></select>
+      <input type="number" id="trHto" placeholder="%" min="10" max="70"></div>
+     <div class="form-group"><label>Plaquetas (×10³)</label>
+      <select class="quick-select" onchange="quickFill('trPlaq',this.value)"><option value="">⚡</option><option value="150">150</option><option value="100">100</option><option value="80">80</option><option value="50">50</option><option value="30">30</option><option value="20">20</option><option value="10">10</option></select>
+      <input type="number" id="trPlaq" placeholder="miles" min="0" max="800"></div>
+     <div class="form-group"><label>FC</label>
+      <select class="quick-select" onchange="quickFill('trFc',this.value)"><option value="">⚡</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option><option value="110">110</option><option value="120">120</option><option value="130">130</option><option value="140">140</option></select>
+      <input type="number" id="trFc" placeholder="x min"></div>
+     <div class="form-group"><label>PA</label>
+      <select class="quick-select" onchange="quickFill('trPa',this.value)"><option value="">⚡</option><option value="120/80">120/80</option><option value="100/70">100/70</option><option value="90/60">90/60</option><option value="80/50">80/50</option><option value="80/40">80/40</option></select>
+      <input type="text" id="trPa" placeholder="120/80"></div>
+     <div class="form-group"><label>GU (mL/kg/h)</label>
+      <select class="quick-select" onchange="quickFill('trGu',this.value)"><option value="">⚡</option><option value="0.1">0.1</option><option value="0.3">0.3</option><option value="0.5">0.5</option><option value="0.8">0.8</option><option value="1">1.0</option><option value="1.5">1.5</option><option value="2">2.0</option></select>
+      <input type="number" id="trGu" placeholder="mL/kg/h" step="0.1" min="0" max="10"></div>
      <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn-add-diuresis" onclick="addTrendRow()">➕ Agregar</button></div>
     </div>
     <div style="overflow-x:auto">
@@ -713,6 +775,13 @@ textarea{resize:vertical;min-height:70px}
       <thead><tr><th>Hora</th><th>Hto</th><th>Plaq</th><th>FC</th><th>PA</th><th>GU</th><th></th></tr></thead>
       <tbody id="trendTbody"><tr id="trendEmptyRow"><td colspan="7" style="text-align:center;color:var(--texto-suave);padding:20px;font-size:.75rem">Sin registros aún. Ingrese datos seriados para detectar tendencias.</td></tr></tbody>
      </table>
+    </div>
+    <div id="trendChartWrap" style="margin-top:12px;display:none">
+     <div class="section-subtitle">📈 Curva de Hematocrito y Plaquetas</div>
+     <canvas id="trendChart" width="600" height="160" style="width:100%;height:160px"></canvas>
+     <div style="display:flex;gap:14px;font-size:.65rem;color:var(--texto-suave);margin-top:4px">
+      <span>🔴 ── Hematocrito (%)</span><span>🔵 ── Plaquetas (×10³)</span>
+     </div>
     </div>
     <div id="trendAlert" style="margin-top:10px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
@@ -752,11 +821,24 @@ textarea{resize:vertical;min-height:70px}
  </div>
 
  <div class="footer">SIMAC-D · Sistema de Manejo Clínico del Dengue · Dr. Rhonnie Duarte M. · © 2026 · Basado en OPS/OMS 2020</div>
+ <div style="max-width:900px;margin:0 auto 24px;font-size:.65rem;line-height:1.6;color:var(--texto-suave,#6B7280);text-align:center;padding:0 20px">
+ 🔒 <b>Aviso de protección de datos (LOPDP 2021 — Ecuador):</b> esta aplicación es un archivo local autocontenido, sin conexión a internet ni servidor. Los datos que ingrese (incluido el guardado local con el botón "💾 Guardar local") permanecen únicamente en este navegador/dispositivo — no se transmiten, respaldan ni auditan en ningún servidor externo. No constituye un historial clínico oficial ni cumple por sí sola con los requisitos de cifrado, trazabilidad y control de acceso que exige la Ley Orgánica de Protección de Datos Personales para el tratamiento de datos de salud. Use datos identificables de pacientes bajo su propia responsabilidad institucional y considere anonimizar la información cuando sea posible.
+ </div>
 </div>
 
 <div class="copy-toast" id="copyToast">✅ Texto copiado al portapapeles</div>
 
-<script>const CREDS={user:"simac2026",pass:"dengue2026"};
+<script>
+// SEGURIDAD: la contraseña NUNCA se guarda en texto plano en el código fuente.
+// Se compara contra un hash SHA-256 calculado con la WebCrypto API del navegador.
+// Esto NO reemplaza una autenticación real de backend (no hay sesiones, roles ni
+// auditoría) — es únicamente una barrera de acceso casual para uso local/offline.
+const CREDS={user:"simac2026",passHash:"4a765f9f5740553682b2648e332fc796757079a5b13dac6b42fd60925ea05cb8"};
+async function sha256Hex(str){
+const enc=new TextEncoder().encode(str);
+const buf=await crypto.subtle.digest("SHA-256",enc);
+return[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
 const SINTOMAS_DATA=[
 {label:"Fiebre (2–7 días)",tipo:""},
 {label:"Náuseas / Vómitos",tipo:""},
@@ -822,17 +904,64 @@ g.innerHTML=EXAMENES_DATA.map(grupo=>`
 ${grupo.items.map(it=>`<div class="exam-item" onclick="toggleExam(this)"><div class="exam-check">✓</div><span>${it}</span></div>`).join("")}
 </div>`).join("");
 }
-function doLogin(){
+async function doLogin(){
 const u=document.getElementById("loginUser").value.trim();
 const p=document.getElementById("loginPass").value.trim();
 const err=document.getElementById("loginError");
-if(u===CREDS.user&&p===CREDS.pass){
+const btn=document.querySelector(".login-btn");
+if(btn){btn.disabled=true;btn.textContent="Verificando…";}
+const hash=await sha256Hex(p);
+if(btn){btn.disabled=false;btn.textContent="INGRESAR AL SISTEMA";}
+if(u===CREDS.user&&hash===CREDS.passHash){
 err.style.display="none";
 document.getElementById("loginScreen").style.display="none";
 document.getElementById("appScreen").style.display="block";
+restoreDraftPrompt();
 }else{
 err.style.display="block";
 }
+}
+// ALMACENAMIENTO LOCAL (NO es una base de datos clínica ni tiene respaldo/nube):
+// guarda el estado del formulario, la tendencia serial y el registro de diuresis
+// en localStorage, exclusivamente en este navegador/dispositivo, para evitar perder
+// el trabajo si se recarga la página accidentalmente.
+const DRAFT_KEY="simacd_borrador_v1";
+const DRAFT_FIELD_IDS=["apellidos","nombres","cedula","sexo","edad","peso","diasFiebre","temperatura","tensionArterial","frecCard","frecResp","spo2","hematocrito","plaquetas","leucocitos","viaje","llenadoCapilar","pulsosPerif","extremidades","estadoMental","feverCedio","horasDefervescencia","antecedentes","institucion","hidPeso","hidClase","omsGrupo"];
+function guardarBorrador(manual){
+try{
+const datos={};
+DRAFT_FIELD_IDS.forEach(id=>{const el=document.getElementById(id);if(el)datos[id]=el.value;});
+const sintomas=[...document.querySelectorAll(".sintoma-item.active span")].map(s=>s.textContent);
+const payload={datos,sintomas,trendData:typeof trendData!=="undefined"?trendData:[],registros:typeof registros!=="undefined"?registros:[],savedAt:Date.now()};
+localStorage.setItem(DRAFT_KEY,JSON.stringify(payload));
+const st=document.getElementById("draftStatus");
+if(st)st.textContent=`💾 Guardado localmente (solo este dispositivo) — ${new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"})}`;
+if(manual)alert("Avance guardado en este dispositivo. Recuerde: no es un respaldo en la nube ni un historial clínico oficial.");
+}catch(e){if(manual)alert("No se pudo guardar localmente (almacenamiento no disponible en este navegador).");}
+}
+function restoreDraftPrompt(){
+try{
+const raw=localStorage.getItem(DRAFT_KEY);
+if(!raw)return;
+const payload=JSON.parse(raw);
+const fecha=new Date(payload.savedAt).toLocaleString("es-EC");
+if(confirm(`Se encontró un avance guardado localmente en este dispositivo (${fecha}).\n¿Desea restaurarlo?`)){
+Object.entries(payload.datos||{}).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v;});
+(payload.sintomas||[]).forEach(label=>{
+document.querySelectorAll(".sintoma-item span").forEach(s=>{if(s.textContent===label)s.closest(".sintoma-item").classList.add("active");});
+});
+if(payload.trendData&&typeof trendData!=="undefined"){trendData.length=0;trendData.push(...payload.trendData);renderTrend();}
+if(payload.registros&&typeof registros!=="undefined"){registros.length=0;registros.push(...payload.registros);renderRegistros();}
+const st=document.getElementById("draftStatus");
+if(st)st.textContent=`✅ Avance restaurado (guardado el ${fecha})`;
+}
+}catch(e){/* almacenamiento no disponible o dato corrupto: se ignora silenciosamente */}
+}
+function borrarBorrador(){
+if(!confirm("¿Eliminar el avance guardado localmente en este dispositivo? Esta acción no se puede deshacer."))return;
+localStorage.removeItem(DRAFT_KEY);
+const st=document.getElementById("draftStatus");
+if(st)st.textContent="🗑️ Avance local eliminado";
 }
 function doLogout(){
 document.getElementById("appScreen").style.display="none";
@@ -863,6 +992,14 @@ return{grales,alarmas,graves,comorbilidades};
 }
 function val(id){return document.getElementById(id)?.value?.trim()||"";}
 function num(id){return parseFloat(val(id))||0;}
+function quickFill(id,value){
+if(!value)return;
+const el=document.getElementById(id);
+if(!el)return;
+el.value=value;
+if(id==="tensionArterial"||id==="frecCard"||id==="horasDefervescencia")calcHemodinamia();
+if(id==="hidPeso")calcHidMetas();
+}
 function parseTA(){
 const ta=val("tensionArterial");
 const m=ta.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
@@ -931,10 +1068,45 @@ const dias=num("diasFiebre");
 const sangradoActivo=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
 renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo);
 renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo);
+renderOrdenes(clase,peso,plaq,hema,dias,sangradoActivo,hemo);
 autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas);
 renderPlantilla(clase,grales,alarmas,graves,comorbilidades,peso,plaq,hema,spo2,dias);
 document.getElementById("cardDx").classList.add("animated");
 document.getElementById("cardTx").classList.add("animated");
+}
+function validarSignosVitales(fc,fr,temp,spo2,hema,plaq,peso,edad){
+const warns=[];
+if(fc>0&&(fc<20||fc>300))warns.push(`FC ${fc}/min fuera de rango fisiológico`);
+if(fr>0&&(fr<4||fr>80))warns.push(`FR ${fr}/min fuera de rango fisiológico`);
+if(temp>0&&(temp<30||temp>43))warns.push(`Temperatura ${temp}°C fuera de rango fisiológico`);
+if(spo2>0&&spo2>100)warns.push(`SpO₂ ${spo2}% inválida (máx. 100%)`);
+if(hema>0&&(hema<10||hema>70))warns.push(`Hematocrito ${hema}% fuera de rango fisiológico`);
+if(plaq>0&&plaq>800)warns.push(`Plaquetas ${plaq}×10³ fuera de rango fisiológico`);
+if(peso>0&&peso>300)warns.push(`Peso ${peso} kg fuera de rango fisiológico`);
+if(edad>0&&edad>120)warns.push(`Edad ${edad} años fuera de rango fisiológico`);
+const{pas,pad}=parseTA();
+if(pas>0&&(pas<30||pas>300))warns.push(`PAS ${pas} mmHg fuera de rango fisiológico`);
+if(pad>0&&(pad<10||pad>200))warns.push(`PAD ${pad} mmHg fuera de rango fisiológico`);
+if(pas>0&&pad>0&&pad>=pas)warns.push(`PAD (${pad}) no puede ser mayor o igual que PAS (${pas}) — verifique el dato`);
+return warns;
+}
+function semaforoNivel(clase,alarmas,graves,hemo){
+if(clase==="DG"||graves.length>0)return{css:"rojo",emoji:"🔴",label:"EMERGENCIA / UCI"};
+if(clase==="DCSA"&&(alarmas.length>1||hemo.motivos.length>0))return{css:"naranja",emoji:"🟠",label:"ALTO RIESGO — Hospitalización con vigilancia estrecha"};
+if(clase==="DCSA")return{css:"amarillo",emoji:"🟡",label:"VIGILANCIA — Hospitalización, monitoreo activo"};
+return{css:"verde",emoji:"🟢",label:"ESTABLE — Manejo ambulatorio con controles"};
+}
+function criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo){
+const hosp=[],uci=[];
+if(alarmas.includes("Vómitos persistentes"))hosp.push("Vómitos persistentes");
+if(comorbilidades.includes("Embarazo"))hosp.push("Embarazo");
+if(comorbilidades.length>0)hosp.push("Comorbilidad(es): "+comorbilidades.join(", "));
+if(alarmas.length>0)hosp.push("Signo(s) de alarma presentes");
+if(graves.includes("Choque / dificultad respiratoria")||hemo.shockIndex>=1||(hemo.pulsePressure>0&&hemo.pulsePressure<20))uci.push("Choque (clínico o por índice de choque/presión diferencial)");
+if(graves.includes("Sangrado grave"))uci.push("Sangrado masivo");
+if(graves.includes("Daño hepático grave")||graves.includes("Miocarditis / Falla orgánica"))uci.push("Falla orgánica");
+if(val("estadoMental")==="inconsciente")uci.push("Encefalopatía / alteración grave de conciencia");
+return{hosp,uci};
 }
 function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo){
 hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
@@ -945,6 +1117,10 @@ const edad=val("edad")?`${val("edad")} años`:"";
 const sexo=val("sexo");
 const info=[nombre,edad,sexo,val("cedula")].filter(Boolean).join(" · ");
 let html=`<div class="result-content">`;
+const warnFis=validarSignosVitales(num("frecCard"),num("frecResp"),num("temperatura"),spo2,hema,plaq,num("peso"),num("edad"));
+if(warnFis.length){html+=`<div class="alerta-box rojo">⚠️ <b>Verifique el ingreso de datos</b> — valor(es) fuera de rango fisiológico: ${warnFis.join(" · ")}</div>`;}
+const nivel=semaforoNivel(clase,alarmas,graves,hemo);
+html+=`<div class="alerta-box ${nivel.css}" style="font-size:.85rem;font-weight:700;align-items:center">${nivel.emoji} ${nivel.label}</div>`;
 html+=`<div class="clasificacion-badge ${cls}">${label}</div>`;
 if(info){html+=`<div style="font-size:.75rem;color:var(--texto-suave);margin-bottom:10px">👤 ${info}</div>`;}
 const sangradoActivoDx=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
@@ -971,6 +1147,9 @@ addSec("Síntomas presentes",grales,"#06402B");
 addSec("Signos de alarma",alarmas,"#C1121F");
 addSec("Signos graves",graves,"#7C3AED");
 addSec("Comorbilidades / Factores de riesgo",comorbilidades,"#2D6A4F");
+const crit=criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo);
+if(crit.uci.length>0){html+=`<div class="alerta-box rojo"><b>🚨 Criterios de UCI cumplidos:</b><br>${crit.uci.map(x=>"• "+x).join("<br>")}</div>`;}
+else if(crit.hosp.length>0){html+=`<div class="alerta-box amarillo"><b>🏥 Criterios de hospitalización cumplidos:</b><br>${crit.hosp.map(x=>"• "+x).join("<br>")}</div>`;}
 const feverCedioDx=val("feverCedio");
 const horasDefervDx=num("horasDefervescencia");
 let fase,faseNota;
@@ -1053,6 +1232,61 @@ html+=trat("morado","🚫 Contraindicaciones Absolutas","NO corticoesteroides ·
 }
 html+="</div>";
 document.getElementById("txContent").innerHTML=html;
+}
+function renderOrdenes(clase,peso,plaq,hema,dias,sangradoActivo,hemo){
+const box=document.getElementById("ordenesContent");
+if(!box)return;
+const fecha=new Date().toLocaleDateString("es-EC",{day:"2-digit",month:"long",year:"numeric"});
+const hora=new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"});
+const nombre=`${val("apellidos")} ${val("nombres")}`.trim()||"Paciente";
+const lines=[];
+lines.push(`ÓRDENES MÉDICAS — ${fecha} ${hora}`);
+lines.push(`Paciente: ${nombre}${val("edad")?` · ${val("edad")} años`:""}${peso?` · ${peso} kg`:""}`);
+lines.push(`Diagnóstico: ${clase==="DSSA"?"Dengue sin signos de alarma":clase==="DCSA"?"Dengue con signos de alarma":"Dengue grave"} (CIE-10 ${clase==="DSSA"?"A97.0":clase==="DCSA"?"A97.1":"A97.2"})`);
+lines.push("");
+lines.push("1. DIETA / VÍA ORAL");
+if(clase==="DSSA")lines.push(`   Dieta general + hidratación oral abundante (SRO/agua) ${peso?`${Math.round(peso*60)}–${Math.round(peso*80)} mL/día`:"60–80 mL/kg/día"}.`);
+else lines.push("   Según tolerancia — priorizar vía IV; valorar NPO si vómitos persistentes.");
+lines.push("");
+lines.push("2. HIDRATACIÓN IV");
+if(clase==="DSSA")lines.push("   No requiere IV de rutina. Solo si no tolera vía oral.");
+else if(clase==="DCSA"){
+const r1=peso?Math.round(peso*5):0,r1b=peso?Math.round(peso*7):0;
+lines.push(`   SS 0.9% o Lactato Ringer: ${peso?`${r1}–${r1b} mL/h`:"5–7 mL/kg/h"} × 1–2 h, reevaluar y ajustar según respuesta (esquema OMS/OPS 2020, ver pestaña Hidratación).`);
+}else{
+const b1=peso?Math.round(peso*10):0,b2=peso?Math.round(peso*20):0;
+lines.push(`   Bolo SS 0.9%: ${peso?`${b1}–${b2} mL`:"10–20 mL/kg"} en 15–30 min. Repetir si persiste choque. Ver esquema completo de reducción en pestaña Hidratación.`);
+}
+lines.push("");
+lines.push("3. MEDICACIÓN");
+lines.push("   Paracetamol 500–1000 mg VO/IV c/6h PRN fiebre/dolor (máx 4 g/día).");
+lines.push("   NO AINEs · NO ácido acetilsalicílico · evitar vía intramuscular.");
+lines.push("");
+lines.push("4. MONITOREO");
+if(clase==="DSSA")lines.push("   Vigilar signos de alarma en domicilio. Consulta de seguimiento en 24–48 h.");
+else if(clase==="DCSA")lines.push("   Signos vitales c/1–2h. Hematocrito y plaquetas c/4–6h. Balance hídrico estricto.");
+else lines.push("   Signos vitales c/15–30min. Hematocrito/coagulación/función orgánica c/2–4h. Diuresis horaria (catéter urinario). ECG continuo.");
+lines.push("");
+lines.push("5. LABORATORIO");
+lines.push(`   Hematocrito de control en ${clase==="DG"?"2–4":clase==="DCSA"?"4–6":"24–48"} horas.`);
+if(sangradoActivo)lines.push("   Sangrado activo documentado: coordinar transfusión de hemoderivados según indicación clínica (ver Tratamiento).");
+else if(plaq>0&&plaq<20)lines.push("   Plaquetopenia severa SIN sangrado activo: transfusión NO indicada por cifra aislada. Vigilancia clínica estricta.");
+lines.push("");
+lines.push("6. INDICACIONES ADICIONALES");
+lines.push("   Reposo relativo. Mosquitero / prevención de picaduras. Vigilar signos de alarma y de sobrehidratación (edema, disnea, crepitantes).");
+lines.push("");
+lines.push(`Elaborado en SIMAC-D · ${val("institucion")||"Institución de salud"}`);
+const txt=lines.join("\n");
+box.innerHTML=`<pre style="white-space:pre-wrap;font-family:'Source Serif 4',serif;font-size:.8rem;line-height:1.7;background:#FAFAFA;border:1.5px solid var(--gris-borde);border-radius:10px;padding:16px;color:var(--texto)">${txt.replace(/</g,"&lt;")}</pre>`;
+box.dataset.ordenesTxt=txt;
+}
+function copyOrdenes(){
+const box=document.getElementById("ordenesContent");
+if(!box||!box.dataset.ordenesTxt){alert("Primero genere el diagnóstico y tratamiento.");return;}
+navigator.clipboard.writeText(box.dataset.ordenesTxt).then(()=>{
+const t=document.getElementById("copyToast");
+if(t){t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
+});
 }
 function autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas){
 document.querySelectorAll(".exam-item").forEach(el=>el.classList.remove("active"));
@@ -1283,7 +1517,40 @@ function calcOMSFluidos(){
 3) Si NO mejora tras el primer bolo: repetir bolo, considerar coloide, y evaluar vasopresores / UCI.<br>
 <span style="font-weight:700">Reevaluación continua: PA, FC, llenado capilar, Hto, diuresis cada 15–30 min.</span></div>`;
   }
+  if(grupo!=="A"&&typeof trendData!=="undefined"&&trendData.length>0){
+    const last=trendData[trendData.length-1];
+    const persisteChoque=(last.si>=1)||(last.pp>0&&last.pp<20)||(last.gu>0&&last.gu<0.5);
+    if(persisteChoque){
+      html+=`<div class="alerta-box rojo" style="margin-top:8px">📉 Última medición registrada (${last.hora}) sugiere que el paciente <b>persiste con signos de choque</b> (ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h). Mantener o repetir bolo; NO reducir aún la velocidad de infusión.</div>`;
+    }else{
+      html+=`<div class="alerta-box verde" style="margin-top:8px">📈 Última medición registrada (${last.hora}) sugiere mejoría hemodinámica. Puede continuar con el descenso escalonado del esquema.</div>`;
+    }
+  }
   box.innerHTML=html;
+}
+let ultimoBolo=null;
+let boloInterval=null;
+function registrarBolo(){
+  const grupo=document.getElementById("omsGrupo")?.value||"B";
+  const minutos=grupo==="C"?20:grupo==="B"?90:0;
+  if(minutos===0){alert("El Grupo A no requiere bolo IV / reevaluación programada.");return;}
+  ultimoBolo={time:Date.now(),grupo,minutos};
+  if(boloInterval)clearInterval(boloInterval);
+  boloInterval=setInterval(actualizarRecordatorioBolo,15000);
+  actualizarRecordatorioBolo();
+}
+function actualizarRecordatorioBolo(){
+  const el=document.getElementById("boloReminder");
+  if(!el||!ultimoBolo)return;
+  const elapsedMin=(Date.now()-ultimoBolo.time)/60000;
+  const restante=ultimoBolo.minutos-elapsedMin;
+  if(restante>0){
+    el.textContent=`⏱ Bolo registrado (Grupo ${ultimoBolo.grupo}) — reevaluar PA/FC/Hto/GU en ${Math.ceil(restante)} min`;
+    el.style.color="var(--texto-suave)";
+  }else{
+    el.innerHTML=`🔴 <b>Han pasado ${Math.abs(Math.ceil(restante))} min desde el bolo — REEVALÚE AHORA</b> (PA, FC, llenado capilar, Hto, diuresis) y registre los valores en Tendencia Serial.`;
+    el.style.color="#C1121F";
+  }
 }
 
 function calcBalance(){
@@ -1407,8 +1674,11 @@ function renderRegistros(){
   }
   // Calculate per-row GU (assume each row = 1h unless consecutive rows exist)
   let totalVol=0;
+  const guPoints=[];
+  const guLabels=[];
   tbody.innerHTML=registros.map((r,i)=>{
     totalVol+=r.vol;
+    guLabels.push(r.hora);
     // Hours since previous record
     let hrs=1;
     if(i>0){
@@ -1422,6 +1692,7 @@ function renderRegistros(){
     if(peso>0&&hrs>0){
       const g=r.vol/(hrs*peso);
       guKg=g.toFixed(2);
+      guPoints.push(g);
       let bc="ok",bl="Normal";
       if(g<0.1){bc="danger";bl="Anuria";}
       else if(g<0.5){bc="danger";bl="Oliguria";}
@@ -1429,7 +1700,7 @@ function renderRegistros(){
       else if(g<=2){bc="bajo";bl="Elevado";}
       else{bc="poliuria";bl="Poliuria";}
       badgeHtml=`<span class="du-badge ${bc}">${bl}</span>`;
-    }
+    }else{guPoints.push(null);}
     return`<tr>
       <td><b>${r.hora}</b></td>
       <td>${r.vol} mL</td>
@@ -1438,6 +1709,15 @@ function renderRegistros(){
       <td><button class="hid-row-btn" onclick="deleteRegistro(${i})" title="Eliminar">🗑</button></td>
     </tr>`;
   }).join("");
+  const regChartWrap=document.getElementById("regChartWrap");
+  if(regChartWrap){
+    if(guPoints.filter(v=>v!=null).length>=2){
+      regChartWrap.style.display="block";
+      drawLineChart("regChart",[{data:guPoints,color:"#0077B6"}],guLabels);
+    }else{
+      regChartWrap.style.display="none";
+    }
+  }
   // Resumen
   const avgH=registros.length>1?(totalVol/registros.length).toFixed(0):totalVol;
   document.getElementById("regResumen").textContent=`Total: ${totalVol} mL en ${registros.length} mediciones`;
@@ -1462,7 +1742,11 @@ function addTrendRow(){
   const hora=val("trHora")||new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"});
   const hto=num("trHto"),plaq=num("trPlaq"),fc=num("trFc"),pa=val("trPa"),gu=num("trGu");
   if(!hto&&!plaq&&!fc&&!pa&&!gu)return;
-  trendData.push({hora,hto,plaq,fc,pa,gu});
+  const m=pa.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
+  const pas=m?parseFloat(m[1]):0,pad=m?parseFloat(m[2]):0;
+  const si=(pas>0&&fc>0)?fc/pas:0;
+  const pp=(pas>0&&pad>0)?pas-pad:0;
+  trendData.push({hora,hto,plaq,fc,pa,gu,pas,pad,si,pp});
   ["trHora","trHto","trPlaq","trFc","trPa","trGu"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   renderTrend();
 }
@@ -1507,7 +1791,85 @@ function renderTrend(){
   }
   const lastGu=[...trendData].reverse().find(r=>r.gu>0);
   if(lastGu&&lastGu.gu<0.5)msgs.push({sev:"rojo",txt:`🚨 Gasto urinario más reciente (${lastGu.gu} mL/kg/h) — OLIGURIA`});
+  // Fracaso de reanimación: signos de choque que NO mejoran en mediciones consecutivas
+  const withSI=trendData.filter(r=>r.si>0);
+  if(withSI.length>=2){
+    const[a,b]=withSI.slice(-2);
+    if(a.si>=1&&b.si>=1)msgs.push({sev:"rojo",txt:"🚨 FRACASO DE REANIMACIÓN: índice de choque persiste ≥1 en 2 mediciones consecutivas pese al manejo. Considerar: sangrado oculto, miocarditis, sepsis asociada, choque refractario. Reevaluar esquema de fluidos."});
+  }
+  const withPP=trendData.filter(r=>r.pp>0);
+  if(withPP.length>=2){
+    const[a,b]=withPP.slice(-2);
+    if(a.pp<20&&b.pp<20)msgs.push({sev:"rojo",txt:"🚨 Presión de pulso persiste <20 mmHg en mediciones consecutivas — respuesta a la reanimación posiblemente inadecuada."});
+  }
+  const withGuSeq=trendData.filter(r=>r.gu>0);
+  if(withGuSeq.length>=2){
+    const[a,b]=withGuSeq.slice(-2);
+    if(a.gu<0.5&&b.gu<0.5)msgs.push({sev:"rojo",txt:"🚨 Oliguria persistente en mediciones consecutivas pese al aporte de fluidos."});
+  }
+  if(withHto.length>=3){
+    const[a,b,c]=withHto.slice(-3);
+    if(a.hto<b.hto&&b.hto<c.hto)msgs.push({sev:"rojo",txt:"🚨 Hematocrito en ascenso sostenido (3 mediciones consecutivas) — fuga plasmática activa/progresiva pese al manejo."});
+  }
   if(alertBox)alertBox.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
+  calcOMSFluidos();
+  const chartWrap=document.getElementById("trendChartWrap");
+  if(chartWrap){
+    if(withHto.length>=2||withPlaq.length>=2){
+      chartWrap.style.display="block";
+      const labels=trendData.map(r=>r.hora);
+      const htoData=trendData.map(r=>r.hto>0?r.hto:null);
+      const plaqData=trendData.map(r=>r.plaq>0?r.plaq:null);
+      drawLineChart("trendChart",[{data:htoData,color:"#C1121F"},{data:plaqData,color:"#0077B6"}],labels);
+    }else{
+      chartWrap.style.display="none";
+    }
+  }
+}
+function drawLineChart(canvasId,series,labels){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext("2d");
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=34,padR=10,padT=10,padB=20;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+  let allVals=[];
+  series.forEach(s=>s.data.forEach(v=>{if(v!=null&&!isNaN(v))allVals.push(v);}));
+  if(allVals.length===0)return;
+  let minV=Math.min(...allVals),maxV=Math.max(...allVals);
+  if(minV===maxV){minV-=1;maxV+=1;}
+  const rangePad=(maxV-minV)*0.15;
+  minV-=rangePad;maxV+=rangePad;
+  const n=labels.length;
+  const xStep=n>1?plotW/(n-1):0;
+  ctx.strokeStyle="#CBD5E1";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,padT+plotH);ctx.lineTo(padL+plotW,padT+plotH);ctx.stroke();
+  ctx.fillStyle="#64748B";ctx.font="9px Montserrat,sans-serif";
+  ctx.fillText(maxV.toFixed(0),2,padT+8);
+  ctx.fillText(minV.toFixed(0),2,padT+plotH);
+  if(n>0){
+    ctx.fillText(labels[0]||"",padL,H-6);
+    if(n>1)ctx.fillText(labels[n-1]||"",padL+plotW-24,H-6);
+  }
+  series.forEach(s=>{
+    ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.beginPath();
+    let started=false;
+    s.data.forEach((v,i)=>{
+      if(v==null||isNaN(v))return;
+      const x=padL+i*xStep;
+      const y=padT+plotH-((v-minV)/(maxV-minV))*plotH;
+      if(!started){ctx.moveTo(x,y);started=true;}else{ctx.lineTo(x,y);}
+    });
+    ctx.stroke();
+    ctx.fillStyle=s.color;
+    s.data.forEach((v,i)=>{
+      if(v==null||isNaN(v))return;
+      const x=padL+i*xStep;
+      const y=padT+plotH-((v-minV)/(maxV-minV))*plotH;
+      ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
@@ -1527,6 +1889,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     const p=document.getElementById("peso")?.value;
     if(p&&!document.getElementById("hidPeso").value)document.getElementById("hidPeso").value=p;
   });
+  // Autoguardado local periódico (solo mientras la sesión esté activa)
+  setInterval(()=>{
+    const app=document.getElementById("appScreen");
+    if(app&&app.style.display!=="none")guardarBorrador(false);
+  },60000);
 });</script>
 </body>
 </html>
