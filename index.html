@@ -446,7 +446,7 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Lactato sérico (mmol/L)</label><input type="number" id="lactato" placeholder="mmol/L" step="0.1" min="0" max="30" oninput="checkPerfusionAvanzada()"></div>
  <div class="form-group"><label>Bicarbonato / HCO₃⁻ (mEq/L)</label><input type="number" id="bicarbonato" placeholder="mEq/L" step="0.1" min="0" max="50" oninput="checkPerfusionAvanzada()"></div>
  <div class="form-group"><label>Exceso/Déficit de bases (mEq/L)</label><input type="number" id="excesoBases" placeholder="ej. -6" step="0.1" min="-30" max="30" oninput="checkPerfusionAvanzada()"></div>
- <div class="form-group"><label>ScvO₂ (%)</label><input type="number" id="scvo2" placeholder="%" min="0" max="100"></div>
+ <div class="form-group"><label>ScvO₂ (%)</label><input type="number" id="scvo2" placeholder="%" min="0" max="100" oninput="checkPerfusionAvanzada()"></div>
  <div class="form-group span2" id="perfusionAvanzadaBox"></div>
  <div class="form-group span2"><label>Otros exámenes (especificar)</label><textarea id="labOtros" placeholder="Otros resultados de laboratorio relevantes..."></textarea></div>
 
@@ -1251,7 +1251,7 @@ return{pas:parseFloat(m[1]),pad:parseFloat(m[2])};
 function checkPerfusionAvanzada(){
 const box=document.getElementById("perfusionAvanzadaBox");
 if(!box)return;
-const lac=num("lactato"),hco3=num("bicarbonato"),be=val("excesoBases")!==""?parseFloat(val("excesoBases")):null;
+const lac=num("lactato"),hco3=num("bicarbonato"),be=val("excesoBases")!==""?parseFloat(val("excesoBases")):null,scvo2=num("scvo2");
 const msgs=[];
 if(lac>0){
 if(lac>=4)msgs.push({sev:"rojo",txt:`🚨 Lactato ${lac} mmol/L (≥4) — hipoperfusión tisular grave, fuerte marcador de choque no resuelto. Meta de reanimación: lactato &lt;2 mmol/L o aclaramiento ≥10%/2h.`});
@@ -1260,6 +1260,11 @@ else msgs.push({sev:"verde",txt:`✅ Lactato ${lac} mmol/L — dentro de rango n
 }
 if(hco3>0&&hco3<18)msgs.push({sev:"amarillo",txt:`⚠ Bicarbonato ${hco3} mEq/L bajo — sugiere acidosis metabólica (frecuente en choque prolongado).`});
 if(be!==null&&!isNaN(be)&&be<=-6)msgs.push({sev:"amarillo",txt:`⚠ Déficit de bases ${be} mEq/L — acidosis metabólica significativa, correlaciona con gravedad del choque.`});
+if(scvo2>0){
+if(scvo2<65)msgs.push({sev:"rojo",txt:`🚨 ScvO₂ ${scvo2}% (&lt;65%) — extracción tisular de O₂ aumentada, sugiere gasto cardíaco/entrega de O₂ insuficiente pese al aporte de fluidos. Meta de reanimación: ScvO₂ ≥70%.`});
+else if(scvo2>90)msgs.push({sev:"amarillo",txt:`⚠ ScvO₂ ${scvo2}% (&gt;90%) — puede indicar shunt periférico, disfunción mitocondrial (fase avanzada de choque) o exceso de sedación; correlacionar clínicamente.`});
+else msgs.push({sev:"verde",txt:`✅ ScvO₂ ${scvo2}% — dentro de rango objetivo (≥70%).`});
+}
 box.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
 }
 function checkHepatico(){
@@ -2136,20 +2141,48 @@ function detenerEsquemaFluidos(){
 // sospecha de hemorragia oculta (choque persiste + Hto cae).
 function evaluarAvanceInfusion(){
   if(!infusionState)return;
-  const last=trendData.length?trendData[trendData.length-1]:null;
-  if(!last||infusionState.lastEvalTs===last.ts)return;
-  infusionState.lastEvalTs=last.ts;
+  const pasos=ESQUEMA_PASOS[infusionState.key];
   const rango=rangoPorEdad(num("edad"));
   const siAlto=rango?rango.siAlto:1.0;
-  const persiste=(last.si>=siAlto)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5);
+  const last=trendData.length?trendData[trendData.length-1]:null;
+  const persisteAhora=!!(last&&((last.si>=siAlto)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5)));
+  // PRIORIDAD MÁXIMA — SOBRECARGA HÍDRICA: se revisa SIEMPRE que se llama esta función, no
+  // solo cuando hay una medición nueva en Tendencia Serial, porque los signos de sobrecarga
+  // (crepitantes, derrame pleural, edema, aumento de peso >5%) se marcan en la pestaña de
+  // Balance Hídrico y pueden aparecer en cualquier momento entre reevaluaciones. Esta es la
+  // 4ª rama del algoritmo OMS que antes faltaba por completo: "sobrecarga → reducir/suspender".
+  const signosSobrecarga=[...document.querySelectorAll("#tabHidratacion .sintoma-item.active")].map(x=>x.querySelector("span").textContent);
+  if(signosSobrecarga.length>0){
+    infusionState.alertaSobrecarga=true;
+    infusionState.signosSobrecarga=signosSobrecarga;
+    infusionState.conflictoChoqueSobrecarga=persisteAhora;
+    if(!persisteAhora){
+      // Sin choque activo + sobrecarga presente: el algoritmo manda reducir/suspender, no
+      // "esperar al siguiente escalón" — se fuerza el avance inmediato hacia una tasa menor.
+      if(infusionState.pasoIdx<pasos.length-1){infusionState.pasoIdx++;infusionState.horaInicioActual=Date.now();infusionState.sugerirSuspender=false;}
+      else infusionState.sugerirSuspender=true;
+    }
+    // Si hay choque Y sobrecarga simultáneos, es un conflicto clínico real (no un caso que
+    // el algoritmo estándar resuelva solo) — se marca para juicio clínico experto/UCI en
+    // vez de que el sistema decida automáticamente reducir o continuar fluidos.
+    actualizarInfusionActual();
+    if(typeof renderCicloOMS==="function")renderCicloOMS();
+    return;
+  }
+  infusionState.alertaSobrecarga=false;
+  infusionState.conflictoChoqueSobrecarga=false;
+  infusionState.sugerirSuspender=false;
+  // El resto (choque persistente / hemorragia oculta / mejoría) sigue requiriendo una
+  // medición NUEVA en Tendencia Serial, para no reevaluar la misma fila repetidamente.
+  if(!last||infusionState.lastEvalTs===last.ts){actualizarInfusionActual();return;}
+  infusionState.lastEvalTs=last.ts;
   const withHto=trendData.filter(r=>r.hto>0);
   const htoBajando=withHto.length>=2&&withHto[withHto.length-1].hto<withHto[withHto.length-2].hto;
-  const pasos=ESQUEMA_PASOS[infusionState.key];
-  if(persiste&&htoBajando){
+  if(persisteAhora&&htoBajando){
     infusionState.alertaHemorragia=true;
   }else{
     infusionState.alertaHemorragia=false;
-    if(persiste){
+    if(persisteAhora){
       if(infusionState.pasoIdx===0){
         infusionState.boloRepetido++;
         if(infusionState.boloRepetido>3)infusionState.requiereEscalar=true;
@@ -2183,13 +2216,20 @@ function actualizarInfusionActual(){
   const restanteMin=paso.minutos-elapsedMin;
   const grupoLbl=infusionState.key==="C"?"Grupo C":infusionState.key==="B_si"?"Grupo B2 (comorbilidad)":"Grupo B2";
   let html="";
+  if(infusionState.alertaSobrecarga){
+    if(infusionState.conflictoChoqueSobrecarga){
+      html+=`<div class="alerta-box rojo" style="font-weight:700">⚠️ CONFLICTO CLÍNICO: choque persistente + signos de sobrecarga hídrica simultáneos (${infusionState.signosSobrecarga.join(", ")}). El algoritmo estándar NO resuelve esto automáticamente — requiere juicio clínico experto (considerar soporte inotrópico/vasopresor en vez de más volumen, manejo en UCI).</div>`;
+    }else{
+      html+=`<div class="alerta-box rojo" style="font-weight:700">🌊 SOBRECARGA HÍDRICA DETECTADA (${infusionState.signosSobrecarga.join(", ")}) — ${infusionState.sugerirSuspender?"considerar SUSPENDER la expansión IV":"REDUCIR la velocidad de infusión al siguiente escalón"}. No continuar el esquema de aumento/mantenimiento estándar mientras persistan estos signos.</div>`;
+    }
+  }
   if(infusionState.alertaHemorragia){
     html+=`<div class="alerta-box rojo" style="font-weight:700">🩸 CHOQUE PERSISTE MIENTRAS EL Hto CAE — sospecha de hemorragia oculta. NO continuar solo con más cristaloide sin buscar sangrado (ver detalle en Diagnóstico/Tratamiento).</div>`;
   }
   if(infusionState.requiereEscalar){
     html+=`<div class="alerta-box rojo" style="font-weight:700">🚨 3 cargas administradas sin mejoría — reclasificar como Dengue Grave y manejar como Grupo C.</div>`;
   }
-  const sev=infusionState.alertaHemorragia||infusionState.requiereEscalar?"rojo":paso.tipo==="bolo"&&infusionState.boloRepetido>1?"naranja":"verde";
+  const sev=infusionState.alertaSobrecarga||infusionState.alertaHemorragia||infusionState.requiereEscalar?"rojo":paso.tipo==="bolo"&&infusionState.boloRepetido>1?"naranja":"verde";
   html+=`<div class="alerta-box ${sev}">
   <div style="font-weight:700">🔄 Infusión actual — ${grupoLbl}${infusionState.pasoIdx===0&&infusionState.boloRepetido>1?` (carga ${infusionState.boloRepetido} de 3)`:""}</div>
   <div style="margin-top:4px">Paso ${infusionState.pasoIdx+1} de ${pasos.length}: <b>${paso.label}</b> — Tasa/volumen indicado: <b>${volTxt}</b> (${paso.ref})</div>
@@ -2315,7 +2355,7 @@ function calcBalance(){
     }
   }
 }
-function toggleSobrehid(el){el.classList.toggle("active");calcBalance();}
+function toggleSobrehid(el){el.classList.toggle("active");calcBalance();if(typeof evaluarAvanceInfusion==="function")evaluarAvanceInfusion();}
 
 function calcGastoUrinario(){
   const vol=parseFloat(document.getElementById("guVolumen").value)||0;
@@ -2532,7 +2572,7 @@ function detectarChoqueRefractario(){
       const withPlaqHem=trendData.filter(r=>r.plaq>0);
       const plaqBaja=withPlaqHem.length>0&&withPlaqHem[withPlaqHem.length-1].plaq<100;
       const plaqCayendo=withPlaqHem.length>=2&&withPlaqHem[withPlaqHem.length-1].plaq<withPlaqHem[0].plaq;
-      hallazgos.push({texto:`Choque persistente MIENTRAS el hematocrito CAE (${ha}%→${hb}%)${plaqBaja?` con plaquetas bajas (${withPlaqHem[withPlaqHem.length-1].plaq}×10³)`:""} — patrón distinto de la fuga plasmática (que esperaría Hto en ascenso)`,complicacion:"🩸 SOSPECHA DE HEMORRAGIA OCULTA: descartar sangrado digestivo, retroperitoneal o hemorragia interna. Considerar: tacto rectal/sangre oculta en heces, ecografía abdominal (líquido libre), Hb/Hto seriados cada 2h, tipificar y cruzar sangre, transfusión de glóbulos rojos si hay compromiso hemodinámico"});
+      hallazgos.push({texto:`Choque persistente MIENTRAS el hematocrito CAE (${ha}%→${hb}%)${plaqBaja?` con plaquetas bajas (${withPlaqHem[withPlaqHem.length-1].plaq}×10³)`:""} — patrón distinto de la fuga plasmática (que esperaría Hto en ascenso)`,complicacion:"🩸 SOSPECHA DE HEMORRAGIA OCULTA — considerar: hemorragia digestiva, sangrado retroperitoneal, hemorragia ginecológica (en mujeres en edad fértil) y hemorragia masiva oculta no evidente al examen. Conducta: tacto rectal/sangre oculta en heces, examen ginecológico si aplica, ecografía abdominal (líquido libre), Hb/Hto seriados cada 2h, tipificar y cruzar sangre, transfusión de glóbulos rojos si hay compromiso hemodinámico"});
     }
   }
   // Fiebre prolongada + leucocitosis en paciente que no mejora: sepsis concomitante
