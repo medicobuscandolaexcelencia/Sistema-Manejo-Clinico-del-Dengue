@@ -422,6 +422,12 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>Glucosa (mg/dl)</label><input type="number" id="glucosa" placeholder="mg/dl" min="10" max="1000"></div>
  <div class="form-group"><label>Proteínas totales / Albúmina (g/dl)</label><input type="number" id="proteinasAlbumina" placeholder="g/dl" step="0.1" min="0" max="12"></div>
  <div class="form-group span2" id="hepaticoBox"></div>
+ <div class="section-subtitle" style="grid-column:1/-1;color:#7C3AED">🫁 Perfusión Avanzada (choque / UCI)</div>
+ <div class="form-group"><label>Lactato sérico (mmol/L)</label><input type="number" id="lactato" placeholder="mmol/L" step="0.1" min="0" max="30" oninput="checkPerfusionAvanzada()"></div>
+ <div class="form-group"><label>Bicarbonato / HCO₃⁻ (mEq/L)</label><input type="number" id="bicarbonato" placeholder="mEq/L" step="0.1" min="0" max="50" oninput="checkPerfusionAvanzada()"></div>
+ <div class="form-group"><label>Exceso/Déficit de bases (mEq/L)</label><input type="number" id="excesoBases" placeholder="ej. -6" step="0.1" min="-30" max="30" oninput="checkPerfusionAvanzada()"></div>
+ <div class="form-group"><label>ScvO₂ (%)</label><input type="number" id="scvo2" placeholder="%" min="0" max="100"></div>
+ <div class="form-group span2" id="perfusionAvanzadaBox"></div>
  <div class="form-group span2"><label>Otros exámenes (especificar)</label><textarea id="labOtros" placeholder="Otros resultados de laboratorio relevantes..."></textarea></div>
 
  <div class="section-subtitle" style="grid-column:1/-1">📋 Antecedentes y Contexto</div>
@@ -1015,7 +1021,7 @@ err.style.display="block";
 // en localStorage, exclusivamente en este navegador/dispositivo, para evitar perder
 // el trabajo si se recarga la página accidentalmente.
 const DRAFT_KEY="simacd_borrador_v1";
-const DRAFT_FIELD_IDS=["apellidos","nombres","cedula","sexo","edad","peso","talla","diasFiebre","temperatura","tensionArterial","frecCard","frecResp","spo2","hematocrito","plaquetas","leucocitos","hemoglobina","ast","alt","creatinina","urea","glucosa","proteinasAlbumina","labOtros","viaje","llenadoCapilar","pulsosPerif","extremidades","estadoMental","feverCedio","horasDefervescencia","antecedentes","observaciones","institucion","tieneUCI","hidPeso","hidClase","omsGrupo"];
+const DRAFT_FIELD_IDS=["apellidos","nombres","cedula","sexo","edad","peso","talla","diasFiebre","temperatura","tensionArterial","frecCard","frecResp","spo2","hematocrito","plaquetas","leucocitos","hemoglobina","ast","alt","creatinina","urea","glucosa","proteinasAlbumina","lactato","bicarbonato","excesoBases","scvo2","labOtros","viaje","llenadoCapilar","pulsosPerif","extremidades","estadoMental","feverCedio","horasDefervescencia","antecedentes","observaciones","institucion","tieneUCI","hidPeso","hidClase","omsGrupo"];
 function guardarBorrador(manual){
 try{
 const datos={};
@@ -1217,6 +1223,23 @@ return{pas:parseFloat(m[1]),pad:parseFloat(m[2])};
 // monitoreo DCSA.
 // AST/TGO o ALT/TGP ≥1000 U/L es criterio OMS de daño hepático grave / dengue grave por
 // sí solo. Se muestra en tiempo real para que no dependa de recordar marcar una casilla.
+// Perfusión avanzada (lactato, bicarbonato, exceso de bases): útil en choque/UCI para
+// cuantificar hipoperfusión tisular más allá de los signos vitales — un lactato elevado
+// persistente pese al manejo es un marcador fuerte de choque no resuelto/refractario.
+function checkPerfusionAvanzada(){
+const box=document.getElementById("perfusionAvanzadaBox");
+if(!box)return;
+const lac=num("lactato"),hco3=num("bicarbonato"),be=val("excesoBases")!==""?parseFloat(val("excesoBases")):null;
+const msgs=[];
+if(lac>0){
+if(lac>=4)msgs.push({sev:"rojo",txt:`🚨 Lactato ${lac} mmol/L (≥4) — hipoperfusión tisular grave, fuerte marcador de choque no resuelto. Meta de reanimación: lactato &lt;2 mmol/L o aclaramiento ≥10%/2h.`});
+else if(lac>=2)msgs.push({sev:"amarillo",txt:`⚠ Lactato ${lac} mmol/L (2–4) — hipoperfusión leve-moderada, vigilar tendencia.`});
+else msgs.push({sev:"verde",txt:`✅ Lactato ${lac} mmol/L — dentro de rango normal.`});
+}
+if(hco3>0&&hco3<18)msgs.push({sev:"amarillo",txt:`⚠ Bicarbonato ${hco3} mEq/L bajo — sugiere acidosis metabólica (frecuente en choque prolongado).`});
+if(be!==null&&!isNaN(be)&&be<=-6)msgs.push({sev:"amarillo",txt:`⚠ Déficit de bases ${be} mEq/L — acidosis metabólica significativa, correlaciona con gravedad del choque.`});
+box.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
+}
 function checkHepatico(){
 const box=document.getElementById("hepaticoBox");
 if(!box)return;
@@ -2002,24 +2025,40 @@ function calcOMSFluidos(){
   // hematocrito seriado y diuresis horaria (respuesta a cada bolo) para recomendar la
   // siguiente acción exacta del algoritmo OPS/OMS 2020, en vez de un texto genérico.
   if(grupo!=="A"){
-    const refract=typeof detectarChoqueRefractario==="function"?detectarChoqueRefractario():{refractario:false,motivos:[]};
+    const refract=typeof detectarChoqueRefractario==="function"?detectarChoqueRefractario():{refractario:false,motivos:[],hallazgos:[]};
     const last=(typeof trendData!=="undefined"&&trendData.length)?trendData[trendData.length-1]:null;
+    const withHtoM=(typeof trendData!=="undefined")?trendData.filter(r=>r.hto>0):[];
+    const htoSubiendo=withHtoM.length>=2&&withHtoM[withHtoM.length-1].hto>withHtoM[withHtoM.length-2].hto;
+    const htoBajando=withHtoM.length>=2&&withHtoM[withHtoM.length-1].hto<withHtoM[withHtoM.length-2].hto;
+    const hayHemorragiaOculta=refract.hallazgos.some(h=>h.complicacion&&h.complicacion.includes("HEMORRAGIA OCULTA"));
     const rangoOms=rangoPorEdad(num("edad"));
     const siAltoOms=rangoOms?rangoOms.siAlto:1.0;
     const persisteChoque=last&&((last.si>=siAltoOms)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5));
     const boloNum=(ultimoBolo&&ultimoBolo.grupo===grupo)?(ultimoBolo.boloCount||1):0;
     let accionTitulo,accionTexto,sev;
-    if(refract.refractario||boloNum>=3&&persisteChoque){
+    // Rama del algoritmo real: bolo → reevaluar en 15-30min/1h → Hto sube: continuar
+    // fluidos (fuga plasmática) · Hto baja: buscar hemorragia · choque persiste: nuevo bolo.
+    if(hayHemorragiaOculta){
+      sev="rojo";
+      accionTitulo="🩸 SOSPECHA DE HEMORRAGIA OCULTA — NO seguir solo con cristaloides";
+      accionTexto=`El choque persiste mientras el hematocrito <b>desciende</b> (no sube) — este patrón sugiere pérdida de sangre entera, no solo fuga plasmática. Buscar activamente: sangrado digestivo, retroperitoneal o hemorragia interna (ecografía abdominal, tacto rectal, Hb/Hto c/2h). Considerar transfusión de glóbulos rojos, no solo más cristaloide.`;
+    }else if(refract.refractario||boloNum>=3&&persisteChoque){
       sev="rojo";
       accionTitulo="🚨 CHOQUE REFRACTARIO — escalar manejo";
       const motivosTxt=refract.motivos.length?refract.motivos.join("; "):"persiste choque pese a 3 bolos administrados";
       accionTexto=`No hay respuesta adecuada pese al manejo (${motivosTxt}). Según el algoritmo: determinar función de bomba y considerar aminas, evaluar acidosis persistente y riesgo de hemorragia oculta, valorar bolos adicionales de coloide, y manejar de preferencia en UCI.`;
+    }else if(last&&persisteChoque&&htoSubiendo){
+      sev="naranja";
+      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
+      const tiempo=grupo==="C"?"15–30 min":"1 h";
+      accionTitulo=`🔁 Repetir bolo (${boloNum+1}ª carga) — choque persiste con Hto en ascenso (fuga plasmática)`;
+      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h, Hto en ascenso — sugiere <b>fuga plasmática activa</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). No reducir el goteo todavía.`;
     }else if(last&&persisteChoque){
       sev="naranja";
       const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
       const tiempo=grupo==="C"?"15–30 min":"1 h";
       accionTitulo=`🔁 Repetir bolo (${boloNum+1}ª carga) — persiste choque`;
-      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). No reducir el goteo todavía.`;
+      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). ${withHtoM.length<2?"Registre un Hto de control para diferenciar fuga plasmática (Hto↑) de hemorragia oculta (Hto↓).":""} No reducir el goteo todavía.`;
     }else if(last&&!persisteChoque){
       sev="verde";
       accionTitulo="⬇️ Reducir al siguiente escalón";
@@ -2428,9 +2467,35 @@ function detectarChoqueRefractario(){
     const[a,b]=withFc.slice(-2);
     if(a.fc>120&&b.fc>120)hallazgos.push({texto:"Taquicardia sostenida >120/min pese al manejo, en contexto de choque persistente",complicacion:"Considerar miocarditis asociada al dengue (solicitar ECG/troponina/ecocardiograma)"});
   }
+  // HEMORRAGIA OCULTA: el patrón que la distingue de la fuga plasmática es que el choque
+  // persiste MIENTRAS el hematocrito CAE (no sube) — si el Hto subiera, el choque se
+  // explicaría por hemoconcentración/fuga capilar; si cae y el paciente sigue en choque,
+  // se está perdiendo sangre entera, no solo plasma. Se refuerza si además hay
+  // plaquetopenia. Este patrón es distinto y se evalúa aparte del choque refractario por
+  // fuga plasmática (que espera Hto en ascenso).
+  const choquePersisteUltimo=(()=>{
+    const withSIx=trendData.filter(r=>r.si>0),withPPx=trendData.filter(r=>r.pp>0);
+    const siOk=withSIx.length>=2&&withSIx.slice(-2).every(r=>r.si>=siAltoRef);
+    const ppOk=withPPx.length>=2&&withPPx.slice(-2).every(r=>r.pp<=20);
+    return siOk||ppOk;
+  })();
+  if(choquePersisteUltimo&&withHto.length>=2){
+    const[ha,hb]=withHto.slice(-2);
+    if(hb<ha){
+      const withPlaqHem=trendData.filter(r=>r.plaq>0);
+      const plaqBaja=withPlaqHem.length>0&&withPlaqHem[withPlaqHem.length-1].plaq<100;
+      const plaqCayendo=withPlaqHem.length>=2&&withPlaqHem[withPlaqHem.length-1].plaq<withPlaqHem[0].plaq;
+      hallazgos.push({texto:`Choque persistente MIENTRAS el hematocrito CAE (${ha}%→${hb}%)${plaqBaja?` con plaquetas bajas (${withPlaqHem[withPlaqHem.length-1].plaq}×10³)`:""} — patrón distinto de la fuga plasmática (que esperaría Hto en ascenso)`,complicacion:"🩸 SOSPECHA DE HEMORRAGIA OCULTA: descartar sangrado digestivo, retroperitoneal o hemorragia interna. Considerar: tacto rectal/sangre oculta en heces, ecografía abdominal (líquido libre), Hb/Hto seriados cada 2h, tipificar y cruzar sangre, transfusión de glóbulos rojos si hay compromiso hemodinámico"});
+    }
+  }
   // Fiebre prolongada + leucocitosis en paciente que no mejora: sepsis concomitante
   const dias=num("diasFiebre"),leuco=num("leucocitos");
   if(hallazgos.length>0&&dias>=7&&leuco>10)hallazgos.push({texto:`Fiebre prolongada (día ${dias}) con leucocitosis (${leuco}×10³) en paciente que no mejora`,complicacion:"Considerar sepsis/infección bacteriana concomitante (hemocultivo, lactato, foco infeccioso)"});
+  // Lactato elevado + choque persistente = evidencia adicional de hipoperfusión no resuelta
+  const lacActual=num("lactato");
+  if(lacActual>=4&&choquePersisteUltimo){
+    hallazgos.push({texto:`Lactato sérico ${lacActual} mmol/L (≥4) con choque persistente`,complicacion:"Hipoperfusión tisular grave — reforzar reanimación, medir aclaramiento de lactato cada 2h, considerar UCI/vasopresores"});
+  }
   return{refractario:hallazgos.length>0,hallazgos,motivos:hallazgos.map(h=>h.texto)};
 }
 function renderTrend(){
