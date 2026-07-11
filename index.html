@@ -13,7 +13,26 @@
 --gris-bg:#F0F4F8;--gris-borde:#CBD5E1;--blanco:#FFF;--texto:#1E293B;--texto-suave:#64748B;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--texto);min-height:100vh}
+body{font-family:'Montserrat',sans-serif;background:var(--gris-bg);color:var(--texto);min-height:100vh;transition:background .25s,color .25s}
+body.dark-mode{--gris-bg:#0F172A;--gris-borde:#334155;--blanco:#1E293B;--texto:#E2E8F0;--texto-suave:#94A3B8}
+body.dark-mode .card,body.dark-mode .plantilla-container,body.dark-mode .tabs-bar,body.dark-mode .footer{background:#1E293B}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea{background:#0F172A;color:#E2E8F0;border-color:#334155}
+body.dark-mode .quick-select{background:#152238!important;border-color:#334155!important;color:#94A3B8}
+body.dark-mode .input-error{background:#3B1219!important}
+body.dark-mode .trat-card{background:#0F172A}
+body.dark-mode .trat-card.urgente{background:#3B1219}
+body.dark-mode .trat-card.advertencia{background:#3B2E0A}
+body.dark-mode .hid-stat{background:#0F172A}
+body.dark-mode .hid-stat.warn{background:#3B2E0A}
+body.dark-mode .hid-stat.danger{background:#3B1219}
+body.dark-mode .diuresis-table th{background:#0F172A}
+body.dark-mode .diuresis-table td{border-bottom-color:#334155}
+body.dark-mode .diuresis-table tr:hover td{background:#152238}
+body.dark-mode .anx-doc{background:#1E293B;border-color:#475569;color:#E2E8F0}
+body.dark-mode .login-logo,body.dark-mode .header-logo-wrap{background:#1E293B}
+body.dark-mode .theme-toggle-btn{background:rgba(255,255,255,.12)}
+.theme-toggle-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:8px 12px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.theme-toggle-btn:hover{background:rgba(255,255,255,.2)}
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,#000 0%,#021a10 20%,#06402B 55%,#0a6040 80%,#000 100%);position:fixed;inset:0;z-index:9999}
 .login-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(6,64,43,.5) 0%,transparent 70%);pointer-events:none}
 .login-card{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);border:1px solid rgba(6,64,43,.5);border-radius:24px;padding:48px 44px 40px;width:420px;max-width:95vw;box-shadow:0 32px 80px rgba(0,0,0,.5);position:relative;z-index:1;text-align:center}
@@ -298,6 +317,7 @@ textarea{resize:vertical;min-height:70px}
  <span class="autor">Dr. Rhonnie Duarte M.</span>
  <span class="autor-sub">Médico General</span>
  <span class="version">OPS/OMS · Junio 2020</span>
+ <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Modo oscuro</button>
  <button class="logout-btn" style="background:#0077B6" onclick="guardarBorrador(true)">💾 Guardar local</button>
  <button class="logout-btn" style="background:#64748B" onclick="borrarBorrador()">🗑️ Borrar local</button>
  <button class="logout-btn" onclick="doLogout()">⏻ Cerrar Sesión</button>
@@ -2648,7 +2668,25 @@ function drawLineChart(canvasId,series,labels){
   });
 }
 
+// Modo oscuro: preferencia guardada localmente (mismo storage que el resto de la app),
+// se aplica al cargar antes de que el usuario note el parpadeo de tema.
+function toggleTheme(){
+  const dark=document.body.classList.toggle("dark-mode");
+  const btn=document.getElementById("themeToggleBtn");
+  if(btn)btn.textContent=dark?"☀️ Modo claro":"🌙 Modo oscuro";
+  try{localStorage.setItem("simacd_tema",dark?"oscuro":"claro");}catch(e){/* almacenamiento no disponible */}
+}
+function aplicarTemaGuardado(){
+  let tema=null;
+  try{tema=localStorage.getItem("simacd_tema");}catch(e){/* almacenamiento no disponible */}
+  if(tema==="oscuro"){
+    document.body.classList.add("dark-mode");
+    const btn=document.getElementById("themeToggleBtn");
+    if(btn)btn.textContent="☀️ Modo claro";
+  }
+}
 document.addEventListener("DOMContentLoaded",()=>{
+  aplicarTemaGuardado();
   setLogos();
   renderCuadroClinico();
   renderExamenes();
