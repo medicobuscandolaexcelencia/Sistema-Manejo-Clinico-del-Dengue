@@ -292,11 +292,34 @@ textarea{resize:vertical;min-height:70px}
  <input class="login-input" type="text" id="loginUser" placeholder="Usuario" autocomplete="username">
  <input class="login-input" type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
  </div>
- <button class="login-btn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
+ <button class="login-btn" id="loginSubmitBtn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
  <div class="login-footer">
  <div class="login-footer-name">Dr. Rhonnie Duarte M.</div>
  <div class="login-footer-sub">Médico General · Autor del Sistema</div>
  <div class="login-footer-copy">© 2026 SIMAC-D · Todos los derechos reservados · Versión OPS/OMS 2020</div>
+ </div>
+ </div>
+</div>
+
+<div id="disclaimerModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(2,10,6,.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+ <div style="background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.5);padding:32px 30px 26px">
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+  <div style="font-size:1.8rem">⚖️</div>
+  <h2 style="font-family:'EB Garamond',serif;font-size:1.4rem;color:#06402B;margin:0">Aviso Legal y Descargo de Responsabilidad Clínica</h2>
+ </div>
+ <div style="font-size:.82rem;line-height:1.65;color:#1E293B">
+  <p style="margin-bottom:12px"><b>1. Propósito de la Aplicación</b><br>SIMAC-D es una herramienta digital de soporte para la toma de decisiones clínicas, diseñada con base en las directrices de la Organización Panamericana de la Salud (OPS/OMS) para el manejo de Dengue. Su único objetivo es optimizar el flujo de trabajo y servir como material de referencia rápida para profesionales de la salud calificados.</p>
+  <p style="margin-bottom:12px"><b>2. No Reemplaza el Juicio Clínico</b><br>El uso de esta aplicación no sustituye, bajo ninguna circunstancia, el criterio médico, la evaluación presencial, ni el diagnóstico de un profesional de la salud. La medicina es una ciencia dinámica; las condiciones individuales de cada paciente (comorbilidades, estado hemodinámico variable y respuesta biológica) exigen una supervisión humana continua. El usuario (médico/enfermero) es el único responsable de validar los datos introducidos y confirmar que los cálculos sugeridos por la aplicación sean correctos antes de ordenar cualquier intervención terapéutica.</p>
+  <p style="margin-bottom:12px"><b>3. Exclusión de Responsabilidad</b><br>Los desarrolladores, autores y colaboradores de SIMAC-D no se hacen responsables de omisiones, errores de transcripción de datos por parte del usuario, fallos de cálculo derivados de entradas incorrectas, ni de decisiones médicas o resultados clínicos desfavorables que ocurran por el uso directo o indirecto de este software. La responsabilidad final del manejo del paciente recae exclusivamente en el profesional que firma la orden médica.</p>
+  <p style="margin-bottom:4px"><b>4. Confidencialidad y Datos de Pacientes</b><br>Al utilizar las funciones de almacenamiento local de esta aplicación, el usuario se compromete a cumplir con las leyes locales de protección de datos médicos y confidencialidad del paciente (secreto profesional). Asegúrese de no dejar sesiones abiertas en dispositivos de uso compartido.</p>
+ </div>
+ <label id="disclaimerCheckLabel" style="display:flex;gap:10px;align-items:flex-start;margin:18px 0 6px;padding:12px 14px;background:#F0FDF4;border-radius:10px;cursor:pointer;font-size:.8rem;line-height:1.4;border:1.5px solid #BBF7D0">
+  <input type="checkbox" id="disclaimerCheckbox" onchange="toggleDisclaimerBtn()" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#06402B">
+  <span>He leído, comprendo y acepto los términos de uso y las limitaciones clínicas de SIMAC-D.</span>
+ </label>
+ <button id="disclaimerContinueBtn" class="login-btn" style="background:linear-gradient(135deg,#94A3B8,#94A3B8);cursor:not-allowed" disabled onclick="aceptarDisclaimer()">CONTINUAR</button>
+ <div id="disclaimerCloseWrap" style="display:none;text-align:center;margin-top:10px">
+  <a href="javascript:void(0)" onclick="cerrarDisclaimerVista()" style="font-size:.75rem;color:#64748B">Cerrar</a>
  </div>
  </div>
 </div>
@@ -553,6 +576,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="hid-meta-item"><div class="hid-meta-val" id="metaMaxVol">—</div><div class="hid-meta-lbl">mL/día máx</div></div>
       <div class="hid-meta-item"><div class="hid-meta-val" id="metaDiuresisMin">—</div><div class="hid-meta-lbl">mL/h diuresis</div></div>
      </div>
+     <div style="font-style:italic;font-size:.65rem;color:var(--texto-suave);margin-top:8px;text-align:center">*Sugerencia automatizada. Valide la respuesta hemodinámica del paciente.*</div>
     </div>
     <div class="form-grid">
      <div class="form-group"><label>Peso (kg)</label>
@@ -931,7 +955,7 @@ textarea{resize:vertical;min-height:70px}
  </div>
  </div>
 
- <div class="footer">SIMAC-D · Sistema de Manejo Clínico del Dengue · Dr. Rhonnie Duarte M. · © 2026 · Basado en OPS/OMS 2020</div>
+ <div class="footer">SIMAC-D · Sistema de Manejo Clínico del Dengue · Dr. Rhonnie Duarte M. · © 2026 · Basado en OPS/OMS 2020 · <a href="javascript:void(0)" onclick="mostrarDisclaimer(true)" style="color:inherit;text-decoration:underline">Términos y Deslinde Legal</a></div>
  <div style="max-width:900px;margin:0 auto 24px;font-size:.65rem;line-height:1.6;color:var(--texto-suave,#6B7280);text-align:center;padding:0 20px">
  🔒 <b>Aviso de protección de datos (LOPDP 2021 — Ecuador):</b> esta aplicación es un archivo local autocontenido, sin conexión a internet ni servidor. Los datos que ingrese (incluido el guardado local con el botón "💾 Guardar local") permanecen únicamente en este navegador/dispositivo — no se transmiten, respaldan ni auditan en ningún servidor externo. No constituye un historial clínico oficial ni cumple por sí sola con los requisitos de cifrado, trazabilidad y control de acceso que exige la Ley Orgánica de Protección de Datos Personales para el tratamiento de datos de salud. Use datos identificables de pacientes bajo su propia responsabilidad institucional y considere anonimizar la información cuando sea posible.
  </div>
@@ -1025,18 +1049,75 @@ async function doLogin(){
 const u=document.getElementById("loginUser").value.trim();
 const p=document.getElementById("loginPass").value.trim();
 const err=document.getElementById("loginError");
-const btn=document.querySelector(".login-btn");
+const btn=document.getElementById("loginSubmitBtn");
 if(btn){btn.disabled=true;btn.textContent="Verificando…";}
 const hash=await sha256Hex(p);
 if(btn){btn.disabled=false;btn.textContent="INGRESAR AL SISTEMA";}
 if(u===CREDS.user&&hash===CREDS.passHash){
 err.style.display="none";
 document.getElementById("loginScreen").style.display="none";
+if(disclaimerVencido()){
+mostrarDisclaimer(false);
+}else{
 document.getElementById("appScreen").style.display="block";
 restoreDraftPrompt();
+}
 }else{
 err.style.display="block";
 }
+}
+// AVISO LEGAL: se re-muestra si nunca se aceptó, si pasaron más de 30 días desde la
+// última aceptación, o si se publicó una versión nueva del aviso (ej. tras una
+// actualización importante del algoritmo clínico) — se controla con DISCLAIMER_VERSION.
+const DISCLAIMER_VERSION="1";
+const DISCLAIMER_DIAS_VALIDEZ=30;
+function disclaimerVencido(){
+let data=null;
+try{data=JSON.parse(localStorage.getItem("simacd_disclaimer")||"null");}catch(e){/* ignorar */}
+if(!data||!data.accepted)return true;
+if(data.version!==DISCLAIMER_VERSION)return true;
+const diasTranscurridos=(Date.now()-data.ts)/86400000;
+if(diasTranscurridos>DISCLAIMER_DIAS_VALIDEZ)return true;
+return false;
+}
+// modoVista=true → se abre solo para consultar (enlace del footer), sin bloquear nada.
+function mostrarDisclaimer(modoVista){
+const modal=document.getElementById("disclaimerModal");
+const checkbox=document.getElementById("disclaimerCheckbox");
+const label=document.getElementById("disclaimerCheckLabel");
+const btn=document.getElementById("disclaimerContinueBtn");
+const closeWrap=document.getElementById("disclaimerCloseWrap");
+if(!modal)return;
+if(modoVista){
+checkbox.checked=true;checkbox.disabled=true;
+label.style.display="none";
+btn.style.display="none";
+closeWrap.style.display="block";
+}else{
+checkbox.checked=false;checkbox.disabled=false;
+label.style.display="flex";
+btn.style.display="block";
+closeWrap.style.display="none";
+toggleDisclaimerBtn();
+}
+modal.style.display="flex";
+}
+function cerrarDisclaimerVista(){
+document.getElementById("disclaimerModal").style.display="none";
+}
+function toggleDisclaimerBtn(){
+const checked=document.getElementById("disclaimerCheckbox").checked;
+const btn=document.getElementById("disclaimerContinueBtn");
+btn.disabled=!checked;
+btn.style.background=checked?"linear-gradient(135deg,#000,#06402B,#0a6040)":"linear-gradient(135deg,#94A3B8,#94A3B8)";
+btn.style.cursor=checked?"pointer":"not-allowed";
+}
+function aceptarDisclaimer(){
+if(!document.getElementById("disclaimerCheckbox").checked)return;
+try{localStorage.setItem("simacd_disclaimer",JSON.stringify({accepted:true,ts:Date.now(),version:DISCLAIMER_VERSION}));}catch(e){/* almacenamiento no disponible */}
+document.getElementById("disclaimerModal").style.display="none";
+document.getElementById("appScreen").style.display="block";
+restoreDraftPrompt();
 }
 // ALMACENAMIENTO LOCAL (NO es una base de datos clínica ni tiene respaldo/nube):
 // guarda el estado del formulario, la tendencia serial y el registro de diuresis
@@ -2084,7 +2165,7 @@ function calcOMSFluidos(){
 ${comorbido?`<span style="font-weight:700">⚖️ Comorbilidad/embarazo/≥65 años: el manejo debe ser individualizado y con monitoreo estricto.</span><br>`:""}
 <span style="font-weight:700">Mejoría clínica = remisión de signos de choque + signos vitales estables + diuresis normal/aumentada + Hto en descenso.</span></div>`;
   }
-  box.innerHTML=puntero+html;
+  box.innerHTML=puntero+html+`<div style="font-style:italic;font-size:.68rem;color:var(--texto-suave);margin-top:8px">*Sugerencia automatizada. Valide la respuesta hemodinámica del paciente.*</div>`;
 }
 let ultimaEvaluacion=null;
 // MOTOR DE ESTADO DE FLUIDOTERAPIA: a diferencia de una recomendación aislada, esto
@@ -2235,6 +2316,7 @@ function actualizarInfusionActual(){
   <div style="margin-top:4px">Paso ${infusionState.pasoIdx+1} de ${pasos.length}: <b>${paso.label}</b> — Tasa/volumen indicado: <b>${volTxt}</b> (${paso.ref})</div>
   <div style="margin-top:4px;font-size:.72rem">${restanteMin>0?`⏱ Próxima reevaluación en ${Math.ceil(restanteMin)} min`:`🔴 Han pasado ${Math.abs(Math.ceil(restanteMin))} min del tiempo indicado — REEVALÚE AHORA y registre PA, FC, Hto y diuresis en «Tendencia Serial» para que el sistema avance el paso automáticamente.`}</div>
   </div>`;
+  html+=`<div style="font-style:italic;font-size:.68rem;color:var(--texto-suave);margin-top:6px">*Sugerencia automatizada. Valide la respuesta hemodinámica del paciente.*</div>`;
   box.innerHTML=html;
 }
 // Representa visualmente el ciclo completo recomendado por la OMS. El estado de cada paso
