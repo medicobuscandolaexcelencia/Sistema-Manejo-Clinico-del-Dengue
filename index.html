@@ -569,10 +569,12 @@ textarea{resize:vertical;min-height:70px}
      </div>
     </div>
     <div id="omsFluidosResult"><div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div></div>
+    <div id="infusionActualBox" style="margin-top:10px"></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
-     <button class="btn-add-diuresis" onclick="registrarBolo()">🩹 Registrar bolo / inicio de infusión</button>
-     <span id="boloReminder" style="font-size:.72rem;color:var(--texto-suave)"></span>
+     <button class="btn-add-diuresis" onclick="iniciarEsquemaFluidos()">▶️ Iniciar / reiniciar seguimiento de infusión</button>
+     <button class="btn-reset-hid" onclick="detenerEsquemaFluidos()">⏹ Detener seguimiento</button>
     </div>
+    <div style="font-size:.65rem;color:var(--texto-suave);margin-top:6px">El sistema avanza automáticamente el paso (bolo → mantenimiento → siguiente escalón) cada vez que registrás una nueva medición en «Tendencia Serial» — no hace falta decidirlo manualmente.</div>
    </div>
   </div>
 
@@ -2020,59 +2022,7 @@ function calcOMSFluidos(){
   if(!box)return;
   if(!peso){box.innerHTML=`<div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div>`;return;}
   const comorbido=tieneComorbilidadORiesgo(getActivos().comorbilidades);
-  let dynHtml="";
-  // MOTOR DE FLUIDOTERAPIA DINÁMICA: combina Índice de Choque, presión de pulso,
-  // hematocrito seriado y diuresis horaria (respuesta a cada bolo) para recomendar la
-  // siguiente acción exacta del algoritmo OPS/OMS 2020, en vez de un texto genérico.
-  if(grupo!=="A"){
-    const refract=typeof detectarChoqueRefractario==="function"?detectarChoqueRefractario():{refractario:false,motivos:[],hallazgos:[]};
-    const last=(typeof trendData!=="undefined"&&trendData.length)?trendData[trendData.length-1]:null;
-    const withHtoM=(typeof trendData!=="undefined")?trendData.filter(r=>r.hto>0):[];
-    const htoSubiendo=withHtoM.length>=2&&withHtoM[withHtoM.length-1].hto>withHtoM[withHtoM.length-2].hto;
-    const htoBajando=withHtoM.length>=2&&withHtoM[withHtoM.length-1].hto<withHtoM[withHtoM.length-2].hto;
-    const hayHemorragiaOculta=refract.hallazgos.some(h=>h.complicacion&&h.complicacion.includes("HEMORRAGIA OCULTA"));
-    const rangoOms=rangoPorEdad(num("edad"));
-    const siAltoOms=rangoOms?rangoOms.siAlto:1.0;
-    const persisteChoque=last&&((last.si>=siAltoOms)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5));
-    const boloNum=(ultimoBolo&&ultimoBolo.grupo===grupo)?(ultimoBolo.boloCount||1):0;
-    let accionTitulo,accionTexto,sev;
-    // Rama del algoritmo real: bolo → reevaluar en 15-30min/1h → Hto sube: continuar
-    // fluidos (fuga plasmática) · Hto baja: buscar hemorragia · choque persiste: nuevo bolo.
-    if(hayHemorragiaOculta){
-      sev="rojo";
-      accionTitulo="🩸 SOSPECHA DE HEMORRAGIA OCULTA — NO seguir solo con cristaloides";
-      accionTexto=`El choque persiste mientras el hematocrito <b>desciende</b> (no sube) — este patrón sugiere pérdida de sangre entera, no solo fuga plasmática. Buscar activamente: sangrado digestivo, retroperitoneal o hemorragia interna (ecografía abdominal, tacto rectal, Hb/Hto c/2h). Considerar transfusión de glóbulos rojos, no solo más cristaloide.`;
-    }else if(refract.refractario||boloNum>=3&&persisteChoque){
-      sev="rojo";
-      accionTitulo="🚨 CHOQUE REFRACTARIO — escalar manejo";
-      const motivosTxt=refract.motivos.length?refract.motivos.join("; "):"persiste choque pese a 3 bolos administrados";
-      accionTexto=`No hay respuesta adecuada pese al manejo (${motivosTxt}). Según el algoritmo: determinar función de bomba y considerar aminas, evaluar acidosis persistente y riesgo de hemorragia oculta, valorar bolos adicionales de coloide, y manejar de preferencia en UCI.`;
-    }else if(last&&persisteChoque&&htoSubiendo){
-      sev="naranja";
-      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
-      const tiempo=grupo==="C"?"15–30 min":"1 h";
-      accionTitulo=`🔁 Repetir bolo (${boloNum+1}ª carga) — choque persiste con Hto en ascenso (fuga plasmática)`;
-      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h, Hto en ascenso — sugiere <b>fuga plasmática activa</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). No reducir el goteo todavía.`;
-    }else if(last&&persisteChoque){
-      sev="naranja";
-      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
-      const tiempo=grupo==="C"?"15–30 min":"1 h";
-      accionTitulo=`🔁 Repetir bolo (${boloNum+1}ª carga) — persiste choque`;
-      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). ${withHtoM.length<2?"Registre un Hto de control para diferenciar fuga plasmática (Hto↑) de hemorragia oculta (Hto↓).":""} No reducir el goteo todavía.`;
-    }else if(last&&!persisteChoque){
-      sev="verde";
-      accionTitulo="⬇️ Reducir al siguiente escalón";
-      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>mejoría clínica</b>. Continúe el descenso escalonado del esquema de referencia (abajo) y siga reevaluando en el intervalo indicado.</b>`;
-    }else{
-      sev="azul";
-      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
-      const tiempo=grupo==="C"?"15–30 min":"1 h";
-      accionTitulo="▶️ Iniciar bolo inicial";
-      accionTexto=`Administrar <b>${bolo} mL</b> en ${tiempo}${comorbido&&grupo!=="C"?" (dosis reducida por comorbilidad/adulto mayor)":""}. Registre PA, FC, llenado capilar, Hto y diuresis en «Tendencia Serial» al reevaluar, para activar el ajuste automático del siguiente paso.`;
-    }
-    dynHtml=`<div class="alerta-box ${sev}" style="margin-bottom:10px"><b>🎯 Recomendación dinámica actual — ${accionTitulo}</b><br>${accionTexto}</div>`;
-    if(comorbido)dynHtml+=`<div class="alerta-box amarillo" style="margin-bottom:10px">⚖️ Paciente con <b>comorbilidad, riesgo social o ≥65 años</b> detectado — se aplica el esquema de volúmenes reducidos del algoritmo OPS/OMS 2020.</div>`;
-  }
+  const puntero=grupo!=="A"?`<div class="alerta-box azul" style="margin-bottom:10px">🔄 Este es el esquema de referencia. Para ver el <b>paso actual y la cuenta regresiva en vivo</b>, use «▶️ Iniciar seguimiento de infusión» arriba.</div>`:"";
   let html="";
   if(grupo==="A"){
     const min=Math.round(peso*60),max=Math.round(peso*80);
@@ -2109,44 +2059,126 @@ function calcOMSFluidos(){
 ${comorbido?`<span style="font-weight:700">⚖️ Comorbilidad/embarazo/≥65 años: el manejo debe ser individualizado y con monitoreo estricto.</span><br>`:""}
 <span style="font-weight:700">Mejoría clínica = remisión de signos de choque + signos vitales estables + diuresis normal/aumentada + Hto en descenso.</span></div>`;
   }
-  box.innerHTML=dynHtml+html;
+  box.innerHTML=puntero+html;
 }
 let ultimaEvaluacion=null;
-let ultimoBolo=null;
-let boloInterval=null;
-function registrarBolo(){
+// MOTOR DE ESTADO DE FLUIDOTERAPIA: a diferencia de una recomendación aislada, esto
+// mantiene un ESTADO PERSISTENTE (paso actual, tasa vigente, hora de inicio del paso) y lo
+// AVANZA AUTOMÁTICAMENTE cada vez que se registra una nueva medición en Tendencia Serial —
+// sin que el usuario tenga que decidir manualmente "ahora reduzco" o "ahora repito bolo".
+// Implementa exactamente la secuencia OPS/OMS 2020: bolo → reevaluar → Hto sube: continuar/
+// reducir · Hto baja + choque: buscar hemorragia · choque persiste: repetir bolo (máx 3).
+const ESQUEMA_PASOS={
+B_no:[
+{tipo:"bolo",label:"Bolo inicial",vol:[10,10],minutos:60,ref:"10 mL/kg en 1 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 1",vol:[5,7],minutos:180,ref:"5–7 mL/kg/h × 2–4 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 2",vol:[3,5],minutos:180,ref:"3–5 mL/kg/h × 2–4 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 3",vol:[2,4],minutos:2160,ref:"2–4 mL/kg/h × 24–48 h"}
+],
+B_si:[
+{tipo:"bolo",label:"Bolo inicial (comorbilidad/≥65a)",vol:[5,5],minutos:60,ref:"5 mL/kg en 1 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 1",vol:[4,4],minutos:180,ref:"4 mL/kg/h × 2–4 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 2",vol:[3,3],minutos:180,ref:"3 mL/kg/h × 2–4 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 3",vol:[2,2],minutos:180,ref:"2 mL/kg/h × 2–4 h"}
+],
+C:[
+{tipo:"bolo",label:"Bolo inicial (choque)",vol:[20,20],minutos:22,ref:"20 mL/kg en 15–30 min"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 1",vol:[10,10],minutos:90,ref:"10 mL/kg/h × 1–2 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 2",vol:[5,7],minutos:300,ref:"5–7 mL/kg/h × 4–6 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 3",vol:[3,5],minutos:180,ref:"3–5 mL/kg/h × 2–4 h"},
+{tipo:"mantenimiento",label:"Mantenimiento — Paso 4",vol:[2,4],minutos:2160,ref:"2–4 mL/kg/h × 24–48 h"}
+]
+};
+let infusionState=null;
+let infusionTimer=null;
+function claveEsquema(grupo,comorbido){return grupo==="C"?"C":(comorbido?"B_si":"B_no");}
+function iniciarEsquemaFluidos(){
+  const peso=parseFloat(document.getElementById("hidPeso")?.value)||0;
   const grupo=document.getElementById("omsGrupo")?.value||"B";
-  // Intervalo de reevaluación del PRIMER bolo según el algoritmo OPS/OMS 2020: Grupo B
-  // (DCSA, con o sin comorbilidad) se reevalúa a la 1 hora; Grupo C (choque) a los 15–30 min.
-  const minutos=grupo==="C"?20:grupo==="B"?60:0;
-  if(minutos===0){alert("El Grupo A no requiere bolo IV / reevaluación programada.");return;}
-  const boloCount=(ultimoBolo&&ultimoBolo.grupo===grupo)?(ultimoBolo.boloCount||1)+1:1;
-  if(boloCount>3){alert("Ya se registraron 3 cargas en este grupo sin mejoría. Según el algoritmo OPS/OMS, este paciente debe reclasificarse como Dengue Grave y manejarse como Grupo C (si no lo está ya).");}
-  ultimoBolo={time:Date.now(),grupo,minutos,boloCount};
-  if(boloInterval)clearInterval(boloInterval);
-  boloInterval=setInterval(actualizarRecordatorioBolo,15000);
-  actualizarRecordatorioBolo();
-  if(typeof calcOMSFluidos==="function")calcOMSFluidos();
-  renderCicloOMS();
+  if(!peso){alert("Ingrese el peso del paciente arriba antes de iniciar el seguimiento.");return;}
+  if(grupo==="A"){alert("El Grupo A (vía oral) no requiere seguimiento de infusión IV.");return;}
+  const comorbido=tieneComorbilidadORiesgo(getActivos().comorbilidades);
+  infusionState={key:claveEsquema(grupo,comorbido),pasoIdx:0,boloRepetido:1,horaInicioActual:Date.now(),pesoUsado:peso,lastEvalTs:null,alertaHemorragia:false,requiereEscalar:false};
+  if(infusionTimer)clearInterval(infusionTimer);
+  infusionTimer=setInterval(actualizarInfusionActual,15000);
+  actualizarInfusionActual();
+  if(typeof renderCicloOMS==="function")renderCicloOMS();
 }
-function actualizarRecordatorioBolo(){
-  const el=document.getElementById("boloReminder");
-  if(!el||!ultimoBolo)return;
-  const elapsedMin=(Date.now()-ultimoBolo.time)/60000;
-  const restante=ultimoBolo.minutos-elapsedMin;
-  if(restante>0){
-    el.textContent=`⏱ Bolo registrado (Grupo ${ultimoBolo.grupo}) — reevaluar PA/FC/Hto/GU en ${Math.ceil(restante)} min`;
-    el.style.color="var(--texto-suave)";
+function detenerEsquemaFluidos(){
+  infusionState=null;
+  if(infusionTimer)clearInterval(infusionTimer);
+  actualizarInfusionActual();
+  if(typeof renderCicloOMS==="function")renderCicloOMS();
+}
+// Se llama automáticamente cada vez que se agrega una fila nueva en Tendencia Serial
+// (ver renderTrend). Decide sola, sin intervención del usuario, si: continuar el paso
+// actual, avanzar al siguiente (mejoría), repetir el bolo (persiste choque), o marcar
+// sospecha de hemorragia oculta (choque persiste + Hto cae).
+function evaluarAvanceInfusion(){
+  if(!infusionState)return;
+  const last=trendData.length?trendData[trendData.length-1]:null;
+  if(!last||infusionState.lastEvalTs===last.ts)return;
+  infusionState.lastEvalTs=last.ts;
+  const rango=rangoPorEdad(num("edad"));
+  const siAlto=rango?rango.siAlto:1.0;
+  const persiste=(last.si>=siAlto)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5);
+  const withHto=trendData.filter(r=>r.hto>0);
+  const htoBajando=withHto.length>=2&&withHto[withHto.length-1].hto<withHto[withHto.length-2].hto;
+  const pasos=ESQUEMA_PASOS[infusionState.key];
+  if(persiste&&htoBajando){
+    infusionState.alertaHemorragia=true;
   }else{
-    el.innerHTML=`🔴 <b>Han pasado ${Math.abs(Math.ceil(restante))} min desde el bolo — REEVALÚE AHORA</b> (PA, FC, llenado capilar, Hto, diuresis) y registre los valores en Tendencia Serial.`;
-    el.style.color="#C1121F";
+    infusionState.alertaHemorragia=false;
+    if(persiste){
+      if(infusionState.pasoIdx===0){
+        infusionState.boloRepetido++;
+        if(infusionState.boloRepetido>3)infusionState.requiereEscalar=true;
+      }else{
+        // Reaparecen signos de choque en fase de mantenimiento → retroceder a repetir bolo.
+        infusionState.pasoIdx=0;
+        infusionState.boloRepetido=1;
+      }
+      infusionState.horaInicioActual=Date.now();
+    }else{
+      infusionState.requiereEscalar=false;
+      if(infusionState.pasoIdx<pasos.length-1){
+        infusionState.pasoIdx++;
+        infusionState.horaInicioActual=Date.now();
+      }
+    }
   }
-  renderCicloOMS();
+  actualizarInfusionActual();
+  if(typeof renderCicloOMS==="function")renderCicloOMS();
 }
-// Representa visualmente el ciclo completo recomendado por la OMS:
-// Evaluación inicial → Fluidoterapia → Reevaluación (1–2h) → Nuevo hematocrito → Ajuste
-// de velocidad → (vuelve a Reevaluación). El estado de cada paso se deriva de acciones
-// reales ya registradas (evaluar(), registrarBolo(), addTrendRow()), no es decorativo.
+function actualizarInfusionActual(){
+  const box=document.getElementById("infusionActualBox");
+  if(!box)return;
+  if(!infusionState){box.innerHTML="";return;}
+  const pasos=ESQUEMA_PASOS[infusionState.key];
+  const paso=pasos[infusionState.pasoIdx];
+  const peso=infusionState.pesoUsado;
+  const volMin=Math.round(peso*paso.vol[0]),volMax=Math.round(peso*paso.vol[1]);
+  const volTxt=paso.tipo==="bolo"?(volMin===volMax?`${volMin} mL`:`${volMin}–${volMax} mL`):(volMin===volMax?`${volMin} mL/h`:`${volMin}–${volMax} mL/h`);
+  const elapsedMin=(Date.now()-infusionState.horaInicioActual)/60000;
+  const restanteMin=paso.minutos-elapsedMin;
+  const grupoLbl=infusionState.key==="C"?"Grupo C":infusionState.key==="B_si"?"Grupo B2 (comorbilidad)":"Grupo B2";
+  let html="";
+  if(infusionState.alertaHemorragia){
+    html+=`<div class="alerta-box rojo" style="font-weight:700">🩸 CHOQUE PERSISTE MIENTRAS EL Hto CAE — sospecha de hemorragia oculta. NO continuar solo con más cristaloide sin buscar sangrado (ver detalle en Diagnóstico/Tratamiento).</div>`;
+  }
+  if(infusionState.requiereEscalar){
+    html+=`<div class="alerta-box rojo" style="font-weight:700">🚨 3 cargas administradas sin mejoría — reclasificar como Dengue Grave y manejar como Grupo C.</div>`;
+  }
+  const sev=infusionState.alertaHemorragia||infusionState.requiereEscalar?"rojo":paso.tipo==="bolo"&&infusionState.boloRepetido>1?"naranja":"verde";
+  html+=`<div class="alerta-box ${sev}">
+  <div style="font-weight:700">🔄 Infusión actual — ${grupoLbl}${infusionState.pasoIdx===0&&infusionState.boloRepetido>1?` (carga ${infusionState.boloRepetido} de 3)`:""}</div>
+  <div style="margin-top:4px">Paso ${infusionState.pasoIdx+1} de ${pasos.length}: <b>${paso.label}</b> — Tasa/volumen indicado: <b>${volTxt}</b> (${paso.ref})</div>
+  <div style="margin-top:4px;font-size:.72rem">${restanteMin>0?`⏱ Próxima reevaluación en ${Math.ceil(restanteMin)} min`:`🔴 Han pasado ${Math.abs(Math.ceil(restanteMin))} min del tiempo indicado — REEVALÚE AHORA y registre PA, FC, Hto y diuresis en «Tendencia Serial» para que el sistema avance el paso automáticamente.`}</div>
+  </div>`;
+  box.innerHTML=html;
+}
+// Representa visualmente el ciclo completo recomendado por la OMS. El estado de cada paso
+// se deriva del infusionState real (motor de estado), no es decorativo.
 function renderStepperHTML(pasos,estados){
   return pasos.map((p,i)=>{
     const st=estados[i];
@@ -2164,57 +2196,52 @@ function renderCicloOMS(){
   const badgeEl=document.getElementById("cicloEstadoBadge");
   if(!stepperEl||!detalleEl)return;
   const grupo=document.getElementById("omsGrupo")?.value||"A";
-  const pasos=["Evaluación inicial","Fluidoterapia","Reevaluación (1–2h)","Nuevo hematocrito","Ajuste de velocidad"];
   if(grupo==="A"){
     stepperEl.innerHTML="";
     detalleEl.innerHTML=`<div class="alerta-box verde">Grupo A (ambulatorio): no requiere ciclo de fluidoterapia IV / reevaluación hospitalaria.</div>`;
     if(badgeEl)badgeEl.textContent="No aplica (Grupo A)";
     return;
   }
-  const estados=[0,0,0,0,0];
   if(!ultimaEvaluacion){
     detalleEl.innerHTML=`<div class="alerta-box azul">Complete la evaluación clínica inicial (botón "Evaluar Paciente") para iniciar el ciclo de reanimación.</div>`;
     if(badgeEl)badgeEl.textContent="Sin iniciar";
-    stepperEl.innerHTML=renderStepperHTML(pasos,[1,0,0,0,0]);
+    stepperEl.innerHTML=renderStepperHTML(["Evaluación inicial","Iniciar infusión","Reevaluación","Ajuste automático"],[1,0,0,0]);
     return;
   }
-  estados[0]=2;
-  let detalle,badgeTxt="Evaluación inicial completa";
-  if(!ultimoBolo){
-    estados[1]=1;
-    detalle=`<div class="alerta-box amarillo">✅ Evaluación inicial completa. Registre el bolo/inicio de infusión (botón arriba) para continuar el ciclo.</div>`;
-    badgeTxt="Pendiente: fluidoterapia";
-  }else{
-    estados[1]=2;
-    const trasBolo=trendData.filter(r=>r.ts&&r.ts>ultimoBolo.time);
-    const elapsedMin=(Date.now()-ultimoBolo.time)/60000;
-    const restante=ultimoBolo.minutos-elapsedMin;
-    if(trasBolo.length===0){
-      estados[2]=1;
-      const restanteTxt=restante>0?`en ${Math.ceil(restante)} min`:"AHORA (tiempo cumplido)";
-      detalle=`<div class="alerta-box ${restante>0?"azul":"rojo"}">⏱ Reevaluación programada ${restanteTxt}. Al reevaluar, registre PA, FC, Hto y diuresis en «Tendencia Serial» (pestaña Hidratación) para completar el ciclo.</div>`;
-      badgeTxt=restante>0?"En curso: esperando reevaluación":"¡Reevalúe ahora!";
-    }else{
-      estados[2]=2;
-      const ultimo=trasBolo[trasBolo.length-1];
-      estados[3]=ultimo.hto>0?2:1;
-      if(estados[3]===2){
-        estados[4]=2;
-        const refract=detectarChoqueRefractario();
-        detalle=`<div class="alerta-box ${refract.refractario?"rojo":"verde"}">✅ Reevaluación y nuevo hematocrito registrados (${ultimo.hora}). ${refract.refractario?"⚠ Persisten signos de choque — ver «Choque Refractario» en Diagnóstico/Tratamiento.":"Ver la «Recomendación dinámica actual» arriba para el siguiente ajuste de velocidad."} Si administra un nuevo bolo, presione «Registrar bolo» nuevamente para reiniciar el temporizador del ciclo.</div>`;
-        badgeTxt=refract.refractario?"Choque refractario — escalar":"Ciclo completo — ajustar velocidad";
-      }else{
-        estados[3]=1;
-        detalle=`<div class="alerta-box amarillo">Se registró una reevaluación pero falta el nuevo hematocrito. Complételo en «Tendencia Serial» para calcular el ajuste de velocidad.</div>`;
-        badgeTxt="Falta hematocrito de control";
-      }
-    }
+  if(!infusionState){
+    stepperEl.innerHTML=renderStepperHTML(["Evaluación inicial","Iniciar infusión","Reevaluación","Ajuste automático"],[2,1,0,0]);
+    detalleEl.innerHTML=`<div class="alerta-box amarillo">✅ Evaluación inicial completa. Presione «▶️ Iniciar / reiniciar seguimiento de infusión» arriba para que el sistema empiece a llevar el estado del esquema.</div>`;
+    if(badgeEl)badgeEl.textContent="Pendiente: iniciar infusión";
+    return;
   }
-  stepperEl.innerHTML=renderStepperHTML(pasos,estados);
+  const pasos=ESQUEMA_PASOS[infusionState.key];
+  const paso=pasos[infusionState.pasoIdx];
+  const pasosLbl=["Evaluación inicial","Iniciar infusión","Reevaluación","Ajuste automático"];
+  const estados=[2,2,0,0];
+  const elapsedMin=(Date.now()-infusionState.horaInicioActual)/60000;
+  const restanteMin=paso.minutos-elapsedMin;
+  let detalle,badgeTxt;
+  if(infusionState.alertaHemorragia){
+    estados[2]=2;estados[3]=2;
+    detalle=`<div class="alerta-box rojo">🩸 Choque persiste con Hto en descenso — sospecha de hemorragia oculta. Ver detalle en Diagnóstico/Tratamiento.</div>`;
+    badgeTxt="⚠ Sospecha de hemorragia oculta";
+  }else if(infusionState.requiereEscalar){
+    estados[2]=2;estados[3]=2;
+    detalle=`<div class="alerta-box rojo">🚨 3 cargas sin mejoría — reclasificar como Dengue Grave, manejar como Grupo C.</div>`;
+    badgeTxt="🚨 Escalar a Grupo C";
+  }else if(restanteMin>0){
+    estados[2]=1;
+    detalle=`<div class="alerta-box azul">⏱ En «${paso.label}» — próxima reevaluación en ${Math.ceil(restanteMin)} min. El sistema avanzará el paso automáticamente al registrar la siguiente medición en Tendencia Serial.</div>`;
+    badgeTxt=`En curso: ${paso.label}`;
+  }else{
+    estados[2]=2;estados[3]=1;
+    detalle=`<div class="alerta-box rojo">🔴 Tiempo de reevaluación cumplido para «${paso.label}». Registre PA, FC, Hto y diuresis en «Tendencia Serial» — el sistema ajustará el paso automáticamente según la respuesta.</div>`;
+    badgeTxt="¡Reevalúe ahora!";
+  }
+  stepperEl.innerHTML=renderStepperHTML(pasosLbl,estados);
   detalleEl.innerHTML=detalle;
   if(badgeEl)badgeEl.textContent=badgeTxt;
 }
-
 function calcBalance(){
   const ids_ing=["ing_oral","ing_ss","ing_hemo","ing_med","ing_alim","ing_otros"];
   const ids_egr=["egr_orina","egr_vomito","egr_diarrea","egr_drenaje","egr_insens","egr_otros"];
@@ -2560,6 +2587,7 @@ function renderTrend(){
   if(refract.refractario)msgs.push({sev:"rojo",txt:"🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial. Ver complicaciones específicas señaladas arriba. Considerar soporte vasopresor e ingreso/escalamiento a UCI."});
   if(alertBox)alertBox.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
   calcOMSFluidos();
+  if(typeof evaluarAvanceInfusion==="function")evaluarAvanceInfusion();
   if(typeof renderCicloOMS==="function")renderCicloOMS();
   const chartWrap=document.getElementById("trendChartWrap");
   if(chartWrap){
