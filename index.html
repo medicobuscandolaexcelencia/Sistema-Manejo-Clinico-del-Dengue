@@ -460,9 +460,9 @@ textarea{resize:vertical;min-height:70px}
  <div style="flex:1;min-width:0">
  <div style="font-weight:800;color:#9F1239;font-size:1rem;letter-spacing:.3px">CONTRAINDICACIÓN ABSOLUTA — NO ADMINISTRAR EN DENGUE</div>
  <div style="color:#9F1239;font-size:.85rem;margin-top:6px;font-weight:600;display:flex;flex-wrap:wrap;gap:6px 14px">
- <span>❌ Ibuprofeno</span><span>❌ Ácido acetilsalicílico (Aspirina)</span><span>❌ Diclofenaco</span><span>❌ Metamizol / Dipirona</span><span>❌ Cualquier otro AINE</span>
+ <span>❌ Ibuprofeno</span><span>❌ Ácido acetilsalicílico (Aspirina)</span><span>❌ Diclofenaco</span><span>❌ Cualquier otro AINE</span>
  </div>
- <div style="color:#9F1239;font-size:.72rem;margin-top:8px">Estos fármacos aumentan el riesgo de hemorragia grave por disfunción plaquetaria y gastritis erosiva. El <b>único antipirético/analgésico permitido es Paracetamol</b> (500–1000 mg VO/IV c/6h, máx. 4 g/día). Esta advertencia aplica a TODAS las clasificaciones (DSSA, DCSA, DG) y a toda la duración de la enfermedad.</div>
+ <div style="color:#9F1239;font-size:.72rem;margin-top:8px">Estos fármacos (AINEs) aumentan el riesgo de hemorragia grave por disfunción plaquetaria y gastritis erosiva. Antipiréticos/analgésicos permitidos: <b>Paracetamol</b> (500–1000 mg VO c/6h, máx. 4 g/día) o, como alternativa autorizada por OPS/OMS 2020, <b>Metamizol</b> (500 mg VO c/6h en adultos — no es un AINE). Esta advertencia sobre AINEs aplica a TODAS las clasificaciones (DSSA, DCSA, DG) y a toda la duración de la enfermedad.</div>
  </div>
  </div>
  </div>
@@ -532,8 +532,8 @@ textarea{resize:vertical;min-height:70px}
      <div class="form-group"><label>Peso (kg)</label>
       <select class="quick-select" onchange="quickFill('hidPeso',this.value)"><option value="">⚡</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option></select>
       <input type="number" id="hidPeso" placeholder="kg" min="1" max="300" oninput="this.dataset.userEdited='true';calcHidMetas()"></div>
-     <div class="form-group"><label>Clasificación</label>
-      <select id="hidClase" onchange="calcHidMetas()">
+     <div class="form-group"><label>Clasificación <span id="hidClaseSyncBadge" style="font-weight:400;color:var(--texto-suave);font-size:.65rem">(🔄 auto)</span> <a href="javascript:void(0)" onclick="resetHidClaseAuto()" style="font-size:.62rem;font-weight:400">↺ reactivar auto</a></label>
+      <select id="hidClase" onchange="this.dataset.userEdited='true';document.getElementById('hidClaseSyncBadge').textContent='(✏️ manual)';calcHidMetas()">
        <option value="DSSA">DSSA — Sin alarma</option>
        <option value="DCSA">DCSA — Con alarma</option>
        <option value="DG">DG — Grave / UCI</option>
@@ -943,12 +943,17 @@ const SINTOMAS_DATA=[
 {label:"Sangrado grave",tipo:"grave"},
 {label:"Daño hepático grave",tipo:"grave"},
 {label:"Miocarditis / Falla orgánica",tipo:"grave"},
+{label:"Intolerancia a la vía oral",tipo:"hospcriterio"},
+{label:"Insuficiencia renal aguda",tipo:"hospcriterio"},
+{label:"Coagulopatía",tipo:"hospcriterio"},
 {label:"Embarazo",tipo:"comorbilidad"},
 {label:"Diabetes mellitus",tipo:"comorbilidad"},
 {label:"Hipertensión arterial",tipo:"comorbilidad"},
 {label:"Obesidad mórbida",tipo:"comorbilidad"},
-{label:"Daño renal / Hepatopatía",tipo:"comorbilidad"},
-{label:"Riesgo social",tipo:"comorbilidad"},
+{label:"Daño renal / Hepatopatía crónica",tipo:"comorbilidad"},
+{label:"Enfermedad úlcero-péptica / gastritis",tipo:"comorbilidad"},
+{label:"Enfermedades hemolíticas",tipo:"comorbilidad"},
+{label:"Riesgo social (vive solo/lejos, sin transporte, pobreza extrema)",tipo:"comorbilidad"},
 {label:"Edad ≤1 año o ≥65 años",tipo:"comorbilidad"},
 {label:"Anticoagulantes / Asma",tipo:"comorbilidad"}
 ];
@@ -965,6 +970,7 @@ const sections=[
 {titulo:"Síntomas generales del dengue",color:"var(--texto-suave)",tipos:[""]},
 {titulo:"⚠ Signos de alarma (DCSA)",color:"#9F1239",tipos:["alarma"]},
 {titulo:"🚨 Signos de dengue grave (DG)",color:"#7C3AED",tipos:["grave"]},
+{titulo:"🏥 Otros criterios de hospitalización (OPS 2020)",color:"#B45309",tipos:["hospcriterio"]},
 {titulo:"+ Comorbilidades / Riesgo social",color:"#166534",tipos:["comorbilidad"]}
 ];
 let html="";
@@ -1068,15 +1074,16 @@ function toggle(el){el.classList.toggle("active");scheduleAutoEval();}
 function toggleExam(el){el.classList.toggle("active");}
 function getActivos(){
 const items=document.querySelectorAll(".sintoma-item.active");
-const grales=[],alarmas=[],graves=[],comorbilidades=[];
+const grales=[],alarmas=[],graves=[],comorbilidades=[],hospcriterio=[];
 items.forEach(el=>{
 const txt=el.querySelector("span").textContent;
 if(el.classList.contains("alarma"))alarmas.push(txt);
 else if(el.classList.contains("grave"))graves.push(txt);
 else if(el.classList.contains("comorbilidad"))comorbilidades.push(txt);
+else if(el.classList.contains("hospcriterio"))hospcriterio.push(txt);
 else grales.push(txt);
 });
-return{grales,alarmas,graves,comorbilidades};
+return{grales,alarmas,graves,comorbilidades,hospcriterio};
 }
 function val(id){return document.getElementById(id)?.value?.trim()||"";}
 function num(id){return parseFloat(val(id))||0;}
@@ -1171,19 +1178,21 @@ return{imc,esObeso,pesoIdeal,pesoAjustado,pesoRecomendado:esObeso?pesoAjustado:p
 // peso a usar en los cálculos de líquidos (pestaña Hidratación) automáticamente.
 function calcPesoParaFluidos(){
 const box=document.getElementById("imcBox");
-if(!box)return null;
 const peso=num("peso"),talla=num("talla"),sexo=val("sexo"),edad=num("edad");
 const r=calcPesoAjustado(peso,talla,sexo,edad);
-if(!r){box.innerHTML="";return null;}
-if(r.esObeso){
-box.innerHTML=`<div class="alerta-box amarillo">⚖️ IMC ${r.imc.toFixed(1)} kg/m² — Obesidad. ${r.nota}</div>`;
-}else{
-box.innerHTML=`<div style="color:var(--texto-suave)">IMC ${r.imc.toFixed(1)} kg/m² (dentro de lo esperado para el cálculo de líquidos por peso real).</div>`;
+if(box){
+if(!r){box.innerHTML="";}
+else if(r.esObeso){box.innerHTML=`<div class="alerta-box amarillo">⚖️ IMC ${r.imc.toFixed(1)} kg/m² — Obesidad. ${r.nota}</div>`;}
+else{box.innerHTML=`<div style="color:var(--texto-suave)">IMC ${r.imc.toFixed(1)} kg/m² (dentro de lo esperado para el cálculo de líquidos por peso real).</div>`;}
 }
+// El peso se copia SIEMPRE a la pestaña Hidratación, tenga o no talla registrada — el
+// ajuste por obesidad (peso ideal/ajustado) es un extra que requiere talla, pero la
+// sincronización básica del peso real no debe depender de eso.
+const pesoRecomendado=(r&&r.esObeso)?r.pesoRecomendado:peso;
 const hidPesoEl=document.getElementById("hidPeso");
-if(hidPesoEl&&(!hidPesoEl.dataset.userEdited||hidPesoEl.value===""||parseFloat(hidPesoEl.value)===peso)){
-hidPesoEl.value=r.pesoRecomendado.toFixed(1);
-calcHidMetas();
+if(peso>0&&hidPesoEl&&(!hidPesoEl.dataset.userEdited||hidPesoEl.value===""||Math.abs(parseFloat(hidPesoEl.value)-peso)<0.05||(r&&Math.abs(parseFloat(hidPesoEl.value)-r.pesoRecomendado)<0.05))){
+hidPesoEl.value=pesoRecomendado.toFixed(1);
+if(typeof calcHidMetas==="function")calcHidMetas();
 }
 return r;
 }
@@ -1300,7 +1309,13 @@ const choqueGrave=hemo.shockIndex>=siUmbral.alto||(hemo.pulsePressure>0&&hemo.pu
 // grave por sí solo, sin depender de que alguien marque manualmente la casilla.
 const danioHepaticoGrave=num("ast")>=1000||num("alt")>=1000;
 if(graves.length>0||choqueGrave||danioHepaticoGrave)return"DG";
-if(alarmas.length>0||comorbilidades.length>0)return"DCSA";
+// CORRECCIÓN CRÍTICA (conforme a OPS/OMS 2020): las comorbilidades NO cambian la
+// clasificación de gravedad — solo determinan el GRUPO de intervención (A vs B1) dentro
+// de DSSA. Un paciente DSSA con comorbilidad sigue siendo DSSA, solo que se maneja en
+// observación hospitalaria (Grupo B1) en vez de en casa (Grupo A). Antes este sistema
+// reclasificaba incorrectamente como DCSA a cualquier paciente con una comorbilidad
+// marcada, aunque no tuviera ningún signo de alarma real.
+if(alarmas.length>0)return"DCSA";
 // Cualquier signo hemodinámico temprano (choque compensado/oculto) obliga a hospitalizar
 // y vigilar como mínimo DCSA, aunque no se haya marcado ningún signo de alarma clásico.
 if(hemo.motivos.length>0)return"DCSA";
@@ -1360,7 +1375,7 @@ return num("peso")>0||num("temperatura")>0||num("frecCard")>0||val("tensionArter
 }
 function evaluarCore(){
 ultimaEvaluacion=Date.now();
-const{grales,alarmas,graves,comorbilidades}=getActivos();
+const{grales,alarmas,graves,comorbilidades,hospcriterio}=getActivos();
 const hemo=calcHemodinamia();
 const clase=clasificar(grales,alarmas,graves,comorbilidades,hemo);
 const peso=num("peso");
@@ -1373,13 +1388,22 @@ const sangradoActivo=alarmas.includes("Sangrado de mucosas")||graves.includes("S
 // para todo lo demás (validaciones, reporte demográfico) se sigue usando el peso real.
 const ajustePeso=calcPesoAjustado(peso,num("talla"),val("sexo"),num("edad"));
 const pesoFluidos=ajustePeso&&ajustePeso.esObeso?ajustePeso.pesoRecomendado:peso;
-renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo);
-renderTx(clase,pesoFluidos,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo,ajustePeso);
+renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio);
+renderTx(clase,pesoFluidos,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo,ajustePeso,hemo);
 renderOrdenes(clase,pesoFluidos,plaq,hema,dias,sangradoActivo,hemo,ajustePeso);
 autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas);
 renderPlantilla(clase,grales,alarmas,graves,comorbilidades,peso,plaq,hema,spo2,dias);
 document.getElementById("cardDx").classList.add("animated");
 document.getElementById("cardTx").classList.add("animated");
+// Sincronizar la clasificación real hacia la pestaña Hidratación: la fluidoterapia debe
+// calcularse según el tipo de dengue diagnosticado, no según una selección manual aparte
+// que el médico podría olvidar actualizar. Si el médico cambió manualmente el selector
+// (para explorar un escenario distinto), se respeta esa elección y no se sobrescribe.
+const hidClaseEl=document.getElementById("hidClase");
+if(hidClaseEl&&!hidClaseEl.dataset.userEdited&&hidClaseEl.value!==clase){
+hidClaseEl.value=clase;
+}
+if(typeof calcHidMetas==="function")calcHidMetas();
 if(typeof renderCicloOMS==="function")renderCicloOMS();
 const badge=document.getElementById("autoEvalBadge");
 if(badge){badge.textContent="✅ Actualizado "+new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit",second:"2-digit"});badge.style.opacity="1";clearTimeout(window.__autoEvalBadgeTimer);window.__autoEvalBadgeTimer=setTimeout(()=>{badge.style.opacity=".55";},1500);}
@@ -1423,6 +1447,58 @@ return warns;
 // Motor de priorización de recursos: diferencia 5 niveles de cuidado en vez de un
 // binario hospitalización/UCI, y considera si la institución actual cuenta con UCI
 // para distinguir "ingresar a UCI aquí" de "referir urgentemente a mayor complejidad".
+// Grupo de intervención OPS/OMS 2020 (A / B1 / B2 / C) — distinto de la clasificación de
+// gravedad (DSSA/DCSA/DG). Un DSSA puede ser Grupo A (casa) o B1 (observación hospitalaria)
+// según tenga o no comorbilidad/riesgo social/criterios de hospitalización.
+function esAdultoMayor(){return num("edad")>=65;}
+function tieneComorbilidadORiesgo(comorbilidades){return(comorbilidades&&comorbilidades.length>0)||esAdultoMayor();}
+function determinarGrupo(clase,comorbilidades,criteriosHosp){
+if(clase==="DG")return"C";
+if(clase==="DCSA")return"B2";
+if(tieneComorbilidadORiesgo(comorbilidades)||criteriosHosp.length>0)return"B1";
+return"A";
+}
+// Criterios de hospitalización exactos (OPS/OMS 2020, revisión sistemática 2019, 217
+// estudios / 237,191 pacientes). Se listan explícitamente los que el paciente cumple.
+function criteriosHospitalizacion(clase,alarmas,graves,comorbilidades,hemo){
+const criterios=[];
+if(clase==="DCSA")criterios.push("Dengue con signos de alarma");
+if(clase==="DG")criterios.push("Dengue grave");
+if([...document.querySelectorAll(".sintoma-item.active.hospcriterio span")].some(s=>s.textContent==="Intolerancia a la vía oral"))criterios.push("Intolerancia a la vía oral");
+if(graves.includes("Choque / dificultad respiratoria"))criterios.push("Dificultad respiratoria");
+if(hemo&&hemo.pulsePressure>0&&hemo.pulsePressure<=20)criterios.push("Acortamiento de la presión de pulso");
+if(val("llenadoCapilar")==="prolongado")criterios.push("Prolongación de llenado capilar (>2 seg)");
+const rango=(hemo&&hemo.rango)||rangoPorEdad(num("edad"));
+if(rango&&hemo&&hemo.pas>0&&hemo.pas<rango.pasMin)criterios.push("Hipotensión arterial");
+if([...document.querySelectorAll(".sintoma-item.active.hospcriterio span")].some(s=>s.textContent==="Insuficiencia renal aguda"))criterios.push("Insuficiencia renal aguda");
+if(comorbilidades&&comorbilidades.includes("Embarazo"))criterios.push("Embarazo");
+if([...document.querySelectorAll(".sintoma-item.active.hospcriterio span")].some(s=>s.textContent==="Coagulopatía"))criterios.push("Coagulopatía");
+return criterios;
+}
+// Criterios de alta (OPS/OMS 2020): clínicos + laboratorio. Usa la Tendencia Serial (si
+// hay ≥2 registros) para evaluar la tendencia de plaquetas y estabilidad del hematocrito.
+function criteriosAlta(clase,alarmas,graves,hemo){
+const clinicos=[],labs=[],faltantes=[];
+const horas=num("horasDefervescencia"),cedio=val("feverCedio");
+if(cedio==="si"&&horas>=48)clinicos.push("Afebril ≥48 h sin antipiréticos");
+else faltantes.push("Afebril ≥48 h sin antipiréticos");
+const sinAlarma=alarmas.length===0&&graves.length===0;
+const buenaPerfusion=!hemo||((hemo.pulsePressure===0||hemo.pulsePressure>40)&&(hemo.shockIndex===0||hemo.shockIndex<(hemo.siUmbral?hemo.siUmbral.vig:0.7)));
+if(sinAlarma&&buenaPerfusion)clinicos.push("Mejoría del estado clínico (sin signos de alarma, hemodinámica normal)");
+else faltantes.push("Mejoría del estado clínico (persisten signos de alarma o hemodinámicos)");
+if(typeof trendData!=="undefined"){
+const withPlaq=trendData.filter(r=>r.plaq>0);
+if(withPlaq.length>=2&&withPlaq[withPlaq.length-1].plaq>withPlaq[0].plaq)labs.push("Tendencia ascendente del recuento de plaquetas");
+else faltantes.push("Tendencia ascendente del recuento de plaquetas (requiere ≥2 mediciones en Tendencia Serial)");
+const withHto=trendData.filter(r=>r.hto>0);
+if(withHto.length>=2){
+const delta=Math.abs(withHto[withHto.length-1].hto-withHto[0].hto);
+if(delta<=3)labs.push("Hematocrito estable, sin líquidos intravenosos");
+else faltantes.push("Hematocrito estable, sin líquidos intravenosos");
+}else faltantes.push("Hematocrito estable, sin líquidos intravenosos (requiere ≥2 mediciones en Tendencia Serial)");
+}else faltantes.push("Tendencia ascendente de plaquetas / Hto estable (requiere registros en Tendencia Serial)");
+return{clinicos,labs,faltantes,cumpleTodos:faltantes.length===0&&(clinicos.length+labs.length)>0};
+}
 function nivelDeCuidado(clase,alarmas,graves,hemo,refract,comorbilidades){
 const tieneUCI=val("tieneUCI");
 const siEstab=hemo.siUmbral?hemo.siUmbral.estab:1.3;
@@ -1457,7 +1533,8 @@ if(nivelConciencia(val("estadoMental"))>=3)uci.push("Encefalopatía / alteració
 if(refract&&refract.refractario)uci.push("Choque refractario a la reanimación con fluidos (ver Tendencia Serial)");
 return{hosp,uci};
 }
-function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo){
+function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio){
+hospcriterio=hospcriterio||[];
 hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
 const labels={DSSA:["badge-dssa","✅ Dengue Sin Signos de Alarma"],DCSA:["badge-dcsa","⚠️ Dengue Con Signos de Alarma"],DG:["badge-dg","🚨 Dengue Grave"]};
 const[cls,label]=labels[clase];
@@ -1473,6 +1550,11 @@ html+=`<div class="alerta-box ${nivel.css}" style="font-size:.85rem;font-weight:
 const nivelCuidado=nivelDeCuidado(clase,alarmas,graves,hemo,detectarChoqueRefractario(),comorbilidades);
 html+=`<div class="alerta-box ${nivelCuidado.css}" style="align-items:flex-start"><div>${nivelCuidado.emoji} <b>Nivel de cuidado recomendado: ${nivelCuidado.nivel}</b><br><span style="font-weight:400">${nivelCuidado.desc}</span></div></div>`;
 html+=`<div class="clasificacion-badge ${cls}">${label}</div>`;
+const criteriosHospDx=criteriosHospitalizacion(clase,alarmas,graves,comorbilidades,hemo);
+const grupoDx=determinarGrupo(clase,comorbilidades,criteriosHospDx);
+const grupoInfo={A:["verde","Grupo A — Tratamiento en el hogar"],B1:["azul","Grupo B1 — Posible remisión para observación"],B2:["amarillo","Grupo B2 — Hospital/unidad de dengue, líquidos IV"],C:["rojo","Grupo C — UCI, tratamiento de urgencia"]}[grupoDx];
+html+=`<div class="alerta-box ${grupoInfo[0]}" style="font-weight:700">📌 ${grupoInfo[1]}</div>`;
+if(criteriosHospDx.length>0)html+=`<div class="alerta-box azul"><b>🏥 Criterios de hospitalización (OPS 2020) cumplidos:</b> ${criteriosHospDx.join(", ")}</div>`;
 if(info){html+=`<div style="font-size:.75rem;color:var(--texto-suave);margin-bottom:10px">👤 ${info}</div>`;}
 const sangradoActivoDx=alarmas.includes("Sangrado de mucosas")||graves.includes("Sangrado grave");
 if(plaq>0&&plaq<100){
@@ -1498,6 +1580,7 @@ html+="</div>";
 addSec("Síntomas presentes",grales,"#06402B");
 addSec("Signos de alarma",alarmas,"#C1121F");
 addSec("Signos graves",graves,"#7C3AED");
+addSec("Otros criterios de hospitalización",hospcriterio,"#B45309");
 addSec("Comorbilidades / Factores de riesgo",comorbilidades,"#2D6A4F");
 const crit=criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo,detectarChoqueRefractario());
 if(crit.uci.length>0){html+=`<div class="alerta-box rojo"><b>🚨 Criterios de UCI cumplidos:</b><br>${crit.uci.map(x=>"• "+x).join("<br>")}</div>`;}
@@ -1516,37 +1599,70 @@ document.getElementById("dxContent").innerHTML=html;
 function trat(tipo,titulo,contenido){
 return`<div class="trat-card ${tipo}"><div class="trat-title">${titulo}</div><div class="trat-body">${contenido}</div></div>`;
 }
-function renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo,ajustePeso){
+function renderTx(clase,peso,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo,ajustePeso,hemo){
 let html=`<div class="result-content">`;
 if(ajustePeso&&ajustePeso.esObeso){html+=`<div class="alerta-box amarillo">⚖️ ${ajustePeso.nota} Los mL/kg de este plan usan el <b>peso ajustado (${peso.toFixed(1)} kg)</b>, no el peso real.</div>`;}
 const volPeso=peso>0?` (${(peso*10).toFixed(0)}–${(peso*20).toFixed(0)} mL/día para ${peso}kg)`:""
-if(clase==="DSSA"){
-html+=trat("verde","🏠 Manejo Ambulatorio",`<ul>
-<li>Paracetamol 500–1000mg c/6h (máx 4g/día). <b>❌ NO Ibuprofeno · NO Aspirina (ácido acetilsalicílico) · NO Diclofenaco · NO Metamizol/Dipirona · NO ningún otro AINE.</b></li>
-<li>Hidratación oral: 2–3 L/día${volPeso} — SRO, agua, jugos naturales, sopas.</li>
-<li>Reposo relativo en cama. Mosquitero.</li>
-<li>Control BHC cada 24–48h (plaquetas y hematocrito).</li>
+const criteriosHosp=criteriosHospitalizacion(clase,alarmas,graves,comorbilidades,hemo);
+const grupo=determinarGrupo(clase,comorbilidades,criteriosHosp);
+const grupoLbl={A:"Grupo A",B1:"Grupo B1",B2:"Grupo B2",C:"Grupo C"}[grupo];
+html+=`<div class="alerta-box ${grupo==="A"?"verde":grupo==="B1"?"azul":grupo==="B2"?"amarillo":"rojo"}" style="font-weight:700">📌 ${grupoLbl} — ${{A:"tratamiento en el hogar, nivel primario",B1:"posible remisión a hospital/unidad de dengue para observación",B2:"hospital/unidad de dengue, requiere líquidos IV",C:"Unidad de Cuidados Intensivos, tratamiento de urgencia"}[grupo]}</div>`;
+if(clase==="DSSA"&&grupo==="A"){
+html+=trat("verde","🏠 Tratamiento en el Hogar (Grupo A)",`<ul>
+<li>Reposo absoluto en cama.</li>
+<li>Dieta normal + abundantes líquidos orales${volPeso} (sales de rehidratación oral, agua, jugos naturales, sopas).</li>
+<li>Educar sobre signos de alarma.</li>
+<li>Lienzos de agua tibia en la frente.</li>
+<li><b>Paracetamol</b>: niños 10 mg/kg VO c/6h · adultos 500 mg VO c/6h (máx 4 g/día) — <b>o</b> <b>Metamizol</b>: niños 10 mg/kg VO c/6h · adultos 500 mg VO c/6h (alternativa autorizada por OPS/OMS 2020).</li>
+<li>❌ NO Ibuprofeno · NO Aspirina (ácido acetilsalicílico) · NO Diclofenaco · NO ningún otro AINE.</li>
 </ul>`);
 html+=trat("advertencia","⚠️ Signos de Alarma — Regresar INMEDIATAMENTE",`<ul>
-<li>Dolor abdominal intenso o continuo</li>
-<li>Vómitos persistentes (≥3/h)</li>
+<li>Dolor abdominal intenso y sostenido, o dolor a la palpación del abdomen</li>
+<li>Vómitos persistentes</li>
+<li>Acumulación de líquidos</li>
 <li>Sangrado de mucosas</li>
-<li>Letargia, confusión o irritabilidad extrema</li>
-<li>No orina en más de 6 horas</li>
+<li>Letargo / irritabilidad</li>
+<li>Hipotensión postural (lipotimia)</li>
+<li>Hepatomegalia &gt;2 cm</li>
 </ul>`);
 html+=trat("","📅 Seguimiento",`<ul>
-<li>Consulta diaria en días 4–6 de enfermedad (fase crítica)</li>
-<li>Si fiebre >7 días: reevaluar y ampliar diagnóstico diferencial</li>
+<li>Monitoreo cada 24–48h y hasta 48h después del descenso de la fiebre sin uso de antipiréticos.</li>
+<li>Si aparece cualquier signo de alarma: reclasificar como DCSA y manejar como Grupo B2.</li>
+<li>Alta por dengue si se cumplen los criterios de alta (ver más abajo).</li>
 </ul>`);
+}else if(clase==="DSSA"&&grupo==="B1"){
+html+=trat("azul","🏥 Remisión a Unidad de Dengue u Hospital (Grupo B1)",`Paciente sin signos de alarma pero con comorbilidad, riesgo social o algún criterio de hospitalización. Requiere observación y atención de su infección y condición asociada — no necesariamente líquidos IV desde el inicio.<ul>
+<li>Vigilar aparición de signos de alarma.</li>
+<li>Valoración binomio madre/hijo si está gestante.</li>
+<li>Estabilizar y manejar comorbilidades.</li>
+<li>Curva febril.</li>
+<li>Estimular la ingestión de líquidos por vía oral.</li>
+<li>Si el paciente no bebe, bebe poco, o está deshidratado: iniciar líquidos IV con lactato de Ringer o SSN 0.9% (fórmula Holliday-Segar en pediátricos, o 2–4 mL/kg/h en adultos).</li>
+<li>Balance de líquidos. Reiniciar la vía oral tan pronto sea posible.</li>
+<li><b>Paracetamol</b> o <b>Metamizol</b> (mismas dosis que Grupo A). ❌ NO AINEs (Ibuprofeno, Aspirina, Diclofenaco).</li>
+</ul>`);
+if(criteriosHosp.length>0)html+=trat("","🏥 Criterios de hospitalización que cumple",`<ul>${criteriosHosp.map(c=>`<li>${c}</li>`).join("")}</ul>`);
 }else if(clase==="DCSA"){
-html+=trat("urgente","🏥 HOSPITALIZACIÓN OBLIGATORIA","Paciente con signos de alarma o comorbilidades. Ingreso para monitoreo y manejo.");
-const vol=peso>0?`${(peso*5).toFixed(0)}–${(peso*10).toFixed(0)} mL/h`:"5–10 mL/kg/h";
-html+=trat("","💧 Hidratación IV",`<ul>
-<li>Solución Isotónica (SS 0.9% o Lactato Ringer): <b>${vol}</b></li>
-<li>Ajustar según respuesta clínica y diuresis (meta: 0.5–1 mL/kg/h)</li>
-<li>Reducir velocidad progresivamente al mejorar</li>
-<li>Hematocrito de control cada 4–6h</li>
+const comorbido=tieneComorbilidadORiesgo(comorbilidades);
+html+=trat("urgente",`🏥 HOSPITALIZACIÓN OBLIGATORIA (Grupo B2${comorbido?" — con comorbilidad/≥65 años":""})`,"Paciente con signos de alarma. Ingreso a hospital o unidad de dengue para líquidos IV y monitoreo estricto.");
+if(comorbido){
+const b1=peso>0?`${(peso*5).toFixed(0)} mL`:"5 mL/kg";
+html+=trat("","💧 Hidratación IV — esquema con comorbilidad/adulto mayor",`<ul>
+<li>Bolo inicial: <b>${b1}</b> (5 mL/kg) en 1 hora → reevaluar.</li>
+<li>Mejoría: reducir a ${peso>0?(peso*4).toFixed(0)+" mL/h":"4 mL/kg/h"} ×2–4h → ${peso>0?(peso*3).toFixed(0)+" mL/h":"3 mL/kg/h"} ×2–4h → ${peso>0?(peso*2).toFixed(0)+" mL/h":"2 mL/kg/h"} ×2–4h.</li>
+<li>Sin mejoría: repetir bolo de <b>${b1}</b> en 1h (máx. 3 cargas). Sin respuesta tras la 3ª: reclasificar Dengue Grave, manejar como Grupo C.</li>
+<li>Ver esquema completo y ajuste dinámico en la pestaña Hidratación.</li>
 </ul>`);
+}else{
+const b1=peso>0?`${(peso*10).toFixed(0)} mL`:"10 mL/kg";
+html+=trat("","💧 Hidratación IV",`<ul>
+<li>Bolo inicial: <b>${b1}</b> (10 mL/kg) en 1 hora → reevaluar.</li>
+<li>Mejoría: reducir a ${peso>0?`${(peso*5).toFixed(0)}–${(peso*7).toFixed(0)} mL/h`:"5–7 mL/kg/h"} ×2–4h → ${peso>0?`${(peso*3).toFixed(0)}–${(peso*5).toFixed(0)} mL/h`:"3–5 mL/kg/h"} ×2–4h → ${peso>0?`${(peso*2).toFixed(0)}–${(peso*4).toFixed(0)} mL/h`:"2–4 mL/kg/h"} ×24–48h.</li>
+<li>Sin mejoría: repetir bolo de <b>${b1}</b> en 1h (máx. 3 cargas). Sin respuesta tras la 3ª: reclasificar Dengue Grave, manejar como Grupo C.</li>
+<li>Ver esquema completo y ajuste dinámico en la pestaña Hidratación.</li>
+</ul>`);
+}
+html+=trat("","✅ Mejoría clínica definida por",`<ul><li>Desaparición progresiva de signos de alarma</li><li>Remisión progresiva de la sintomatología general</li><li>Signos vitales estables</li><li>Diuresis normal o aumentada</li><li>Disminución del hematocrito a menos del valor base</li><li>Buena tolerancia a la vía oral</li><li>Recuperación del apetito</li></ul>`);
 if(plaq>0&&plaq<20&&sangradoActivo){html+=trat("urgente","🩸 Transfusión Plaquetaria Urgente",`Plaquetas &lt;20×10³ CON sangrado activo. Transfusión indicada. Considerar concentrado plaquetario.`);}
 else if(plaq>0&&plaq<20){html+=trat("advertencia","🩸 Plaquetopenia Severa — Transfusión NO indicada por cifra aislada",`Plaquetas ${plaq}×10³ sin sangrado activo evidente. En dengue la transfusión profiláctica por cifra baja <b>no está indicada</b>. Vigilancia clínica estricta, reposo absoluto, evitar inyecciones IM y procedimientos invasivos innecesarios. Transfundir solo ante sangrado activo significativo, hemorragia digestiva/intracraneal, CID o necesidad de procedimiento invasivo urgente.`);}
 else if(plaq>0&&plaq<50){html+=trat("advertencia","🩸 Vigilancia Plaquetaria",`Plaquetas ${plaq}×10³. Control estricto. Transfusión NO indicada por cifra aislada; reservar para sangrado activo significativo.`);}
@@ -1558,27 +1674,27 @@ html+=trat("","📊 Monitoreo",`<ul>
 </ul>`);
 if(comorbilidades.includes("Embarazo")){html+=trat("morado","🤰 Embarazo","Interconsulta con Ginecoobstetricia. Monitoreo fetal continuo. Precaución extrema con fluidos.");}
 }else{
-html+=trat("urgente","🚨 UCI / TERAPIA INTENSIVA","Dengue Grave. Traslado inmediato a unidad de cuidados intensivos.");
+html+=trat("urgente","🚨 UCI / TERAPIA INTENSIVA — Grupo C","Dengue Grave. Traslado inmediato a unidad de cuidados intensivos. ABC + monitoreo de signos vitales c/5–30 min + oxigenoterapia.");
 if(graves.includes("Choque / dificultad respiratoria")){
-const bolus=peso>0?`${(peso*10).toFixed(0)} mL`:"10 mL/kg";
-html+=trat("urgente","⚡ Choque — Resucitación Inmediata",`<ul>
-<li>Bolo SS 0.9%: <b>${bolus}</b> en 15–20 min. Repetir si persiste choque.</li>
-<li>Monitoreo hemodinámico continuo</li>
-<li>Vasopresores si no responde a fluidos</li>
-<li>O₂ de alto flujo / soporte ventilatorio si SpO₂<94%</li>
+const bolus=peso>0?`${(peso*20).toFixed(0)} mL`:"20 mL/kg";
+html+=trat("urgente","⚡ Choque — Resucitación Inmediata (Grupo C)",`<ul>
+<li>Bolo SS 0.9% o Lactato Ringer: <b>${bolus}</b> (20 mL/kg) en 15–30 min. Repetir hasta 3 cargas si persiste choque.</li>
+<li>Mejoría tras bolo: reducir a ${peso>0?(peso*10).toFixed(0)+" mL/h":"10 mL/kg/h"} ×1–2h → ${peso>0?`${(peso*5).toFixed(0)}–${(peso*7).toFixed(0)} mL/h`:"5–7 mL/kg/h"} ×4–6h → ${peso>0?`${(peso*3).toFixed(0)}–${(peso*5).toFixed(0)} mL/h`:"3–5 mL/kg/h"} ×2–4h → ${peso>0?`${(peso*2).toFixed(0)}–${(peso*4).toFixed(0)} mL/h`:"2–4 mL/kg/h"} ×24–48h.</li>
+<li>Choque persistente tras 3ª carga: determinar función de bomba y considerar aminas; evaluar acidosis persistente y hemorragia oculta; considerar coloide; manejo preferente en UCI.</li>
+<li>O₂ de alto flujo / soporte ventilatorio si SpO₂&lt;94%</li>
 </ul>`);
 }
 if(spo2>0&&spo2<94){html+=trat("urgente","🫁 Soporte Respiratorio",`SpO₂: ${spo2}%. Oxigenoterapia inmediata. Preparar para ventilación mecánica.`);}
 if(sangradoActivo||graves.includes("Sangrado grave")){html+=trat("urgente","🩸 Hemorragia / Transfusión",`Sangrado activo/grave documentado${plaq>0?` (plaquetas ${plaq}×10³)`:""}. Transfusión urgente. Considerar PFC/crioprecipitado si coagulopatía o CID.`);}
 else if(plaq>0&&plaq<20){html+=trat("advertencia","🩸 Plaquetopenia Severa sin sangrado activo",`Plaquetas ${plaq}×10³. La transfusión NO está indicada solo por la cifra aislada. Vigilancia estricta y evitar procedimientos invasivos no esenciales.`);}
 html+=trat("urgente","👁️ Monitoreo UCI",`<ul>
-<li>Signos vitales c/15–30 min</li>
+<li>Signos vitales c/5–30 min (según algoritmo OPS/OMS 2020)</li>
 <li>BHC, coagulación y función orgánica c/2–4h</li>
 <li>Catéter urinario: diuresis horaria</li>
 <li>ECG continuo</li>
 <li>Ecocardiograma urgente si hay alteración hemodinámica</li>
 </ul>`);
-html+=trat("morado","🚫 Contraindicaciones Absolutas","NO corticoesteroides · ❌ NO Ibuprofeno · ❌ NO Aspirina/ácido acetilsalicílico · ❌ NO Diclofenaco · ❌ NO Metamizol/Dipirona · NO ningún otro AINE · NO antibióticos profilácticos sin foco infeccioso demostrado. Aumentan el riesgo de hemorragia grave por disfunción plaquetaria.");
+html+=trat("morado","🚫 Contraindicaciones Absolutas","NO corticoesteroides · ❌ NO Ibuprofeno · ❌ NO Aspirina/ácido acetilsalicílico · ❌ NO Diclofenaco · NO ningún otro AINE · NO antibióticos profilácticos sin foco infeccioso demostrado. Aumentan el riesgo de hemorragia grave por disfunción plaquetaria. (Metamizol no es un AINE y está autorizado como antipirético alternativo).");
 }
 const refractTx=detectarChoqueRefractario();
 if(refractTx.refractario){
@@ -1590,6 +1706,11 @@ html+=trat("urgente","🚨 Choque Refractario — Escalar Manejo",`No hay respue
 <li>Dirigir estudios según la complicación señalada arriba: ecografía FAST y Hb/Hto seriados (sangrado oculto), troponina/ECG/ecocardiograma (miocarditis), hemocultivo/lactato/procalcitonina (sepsis)</li>
 </ul>`);
 }
+const alta=criteriosAlta(clase,alarmas,graves,hemo);
+if(alta.clinicos.length+alta.labs.length>0||alta.faltantes.length>0){
+const items=[...alta.clinicos.map(c=>`✅ ${c}`),...alta.labs.map(c=>`✅ ${c}`),...alta.faltantes.map(c=>`⬜ ${c}`)];
+html+=trat(alta.cumpleTodos?"verde":"","🏁 Criterios de Alta (OPS/OMS 2020)",`<ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul>${alta.cumpleTodos?"<b>✅ Cumple criterios de alta.</b>":"<i>Aún no cumple todos los criterios.</i>"}`);
+}
 html+="</div>";
 document.getElementById("txContent").innerHTML=html;
 }
@@ -1599,10 +1720,14 @@ if(!box)return;
 const fecha=new Date().toLocaleDateString("es-EC",{day:"2-digit",month:"long",year:"numeric"});
 const hora=new Date().toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit"});
 const nombre=`${val("apellidos")} ${val("nombres")}`.trim()||"Paciente";
+const{grales,alarmas,graves,comorbilidades}=getActivos();
+const criteriosHosp=criteriosHospitalizacion(clase,alarmas,graves,comorbilidades,hemo);
+const grupo=determinarGrupo(clase,comorbilidades,criteriosHosp);
+const comorbido=tieneComorbilidadORiesgo(comorbilidades);
 const lines=[];
 lines.push(`ÓRDENES MÉDICAS — ${fecha} ${hora}`);
 lines.push(`Paciente: ${nombre}${val("edad")?` · ${val("edad")} años`:""}${peso?` · ${peso.toFixed?peso.toFixed(1):peso} kg${ajustePeso&&ajustePeso.esObeso?" (peso AJUSTADO por obesidad, no peso real — ver nota abajo)":""}`:""}`);
-lines.push(`Diagnóstico: ${clase==="DSSA"?"Dengue sin signos de alarma":clase==="DCSA"?"Dengue con signos de alarma":"Dengue grave"} (CIE-10 ${clase==="DSSA"?"A97.0":clase==="DCSA"?"A97.1":"A97.2"})`);
+lines.push(`Diagnóstico: ${clase==="DSSA"?"Dengue sin signos de alarma":clase==="DCSA"?"Dengue con signos de alarma":"Dengue grave"} (CIE-10 ${clase==="DSSA"?"A97.0":clase==="DCSA"?"A97.1":"A97.2"}) — Grupo ${grupo}`);
 if(ajustePeso&&ajustePeso.esObeso)lines.push(`⚖️ NOTA: ${ajustePeso.nota}`);
 lines.push("");
 lines.push("1. DIETA / VÍA ORAL");
@@ -1610,30 +1735,37 @@ if(clase==="DSSA")lines.push(`   Dieta general + hidratación oral abundante (SR
 else lines.push("   Según tolerancia — priorizar vía IV; valorar NPO si vómitos persistentes.");
 lines.push("");
 lines.push("2. HIDRATACIÓN IV");
-if(clase==="DSSA")lines.push("   No requiere IV de rutina. Solo si no tolera vía oral.");
+if(clase==="DSSA"&&grupo==="A")lines.push("   No requiere IV de rutina. Solo si no tolera vía oral.");
+else if(clase==="DSSA"&&grupo==="B1")lines.push("   Estimular vía oral. Si no tolera: Lactato Ringer o SSN 0.9% (Holliday-Segar en pediátricos, o 2–4 mL/kg/h en adultos).");
 else if(clase==="DCSA"){
-const r1=peso?Math.round(peso*5):0,r1b=peso?Math.round(peso*7):0;
-lines.push(`   SS 0.9% o Lactato Ringer: ${peso?`${r1}–${r1b} mL/h`:"5–7 mL/kg/h"} × 1–2 h, reevaluar y ajustar según respuesta (esquema OMS/OPS 2020, ver pestaña Hidratación).`);
+if(comorbido){
+const b1=peso?Math.round(peso*5):0;
+lines.push(`   Bolo inicial (Grupo B2, con comorbilidad/≥65a): ${peso?`${b1} mL`:"5 mL/kg"} en 1h → reevaluar. Esquema completo en pestaña Hidratación.`);
 }else{
-const b1=peso?Math.round(peso*10):0,b2=peso?Math.round(peso*20):0;
-lines.push(`   Bolo SS 0.9%: ${peso?`${b1}–${b2} mL`:"10–20 mL/kg"} en 15–30 min. Repetir si persiste choque. Ver esquema completo de reducción en pestaña Hidratación.`);
+const b1=peso?Math.round(peso*10):0;
+lines.push(`   Bolo inicial (Grupo B2): ${peso?`${b1} mL`:"10 mL/kg"} en 1h → reevaluar. Esquema completo en pestaña Hidratación.`);
+}
+}else{
+const b1=peso?Math.round(peso*20):0;
+lines.push(`   Bolo inicial (Grupo C): ${peso?`${b1} mL`:"20 mL/kg"} en 15–30 min. Repetir hasta 3 cargas si persiste choque. Esquema completo en pestaña Hidratación.`);
 }
 lines.push("");
 lines.push("3. MEDICACIÓN");
-lines.push("   Paracetamol 500–1000 mg VO/IV c/6h PRN fiebre/dolor (máx 4 g/día).");
-lines.push("   ❌ CONTRAINDICADO: Ibuprofeno, Aspirina/ácido acetilsalicílico, Diclofenaco, Metamizol/Dipirona y cualquier otro AINE (riesgo de hemorragia grave). Evitar vía intramuscular.");
+lines.push("   Paracetamol 500–1000 mg VO c/6h (máx 4 g/día) — o Metamizol 500 mg VO c/6h en adultos (10 mg/kg en niños) como alternativa autorizada OPS/OMS 2020.");
+lines.push("   ❌ CONTRAINDICADO: Ibuprofeno, Aspirina/ácido acetilsalicílico, Diclofenaco y cualquier otro AINE (riesgo de hemorragia grave). Evitar vía intramuscular.");
 lines.push("");
 lines.push("4. MONITOREO");
-if(clase==="DSSA")lines.push("   Vigilar signos de alarma en domicilio. Consulta de seguimiento en 24–48 h.");
-else if(clase==="DCSA")lines.push("   Signos vitales c/1–2h. Hematocrito y plaquetas c/4–6h. Balance hídrico estricto.");
-else lines.push("   Signos vitales c/15–30min. Hematocrito/coagulación/función orgánica c/2–4h. Diuresis horaria (catéter urinario). ECG continuo.");
+if(clase==="DSSA")lines.push(grupo==="A"?"   Vigilar signos de alarma en domicilio. Monitoreo cada 24–48h y hasta 48h post-descenso de fiebre sin antipiréticos.":"   Observación hospitalaria. Vigilar signos de alarma, curva febril, tolerancia oral.");
+else if(clase==="DCSA")lines.push("   Signos vitales y reevaluación según esquema (1h tras bolo inicial, luego cada 2–4h). Hematocrito y plaquetas seriados. Balance hídrico estricto.");
+else lines.push("   Signos vitales c/5–30min. Hematocrito/coagulación/función orgánica c/2–4h. Diuresis horaria (catéter urinario). ECG continuo.");
 lines.push("");
 lines.push("5. LABORATORIO");
 lines.push(`   Hematocrito de control en ${clase==="DG"?"2–4":clase==="DCSA"?"4–6":"24–48"} horas.`);
 if(sangradoActivo)lines.push("   Sangrado activo documentado: coordinar transfusión de hemoderivados según indicación clínica (ver Tratamiento).");
 else if(plaq>0&&plaq<20)lines.push("   Plaquetopenia severa SIN sangrado activo: transfusión NO indicada por cifra aislada. Vigilancia clínica estricta.");
+if(criteriosHosp.length>0){lines.push("");lines.push("6. CRITERIOS DE HOSPITALIZACIÓN QUE CUMPLE");criteriosHosp.forEach(c=>lines.push("   • "+c));}
 lines.push("");
-lines.push("6. INDICACIONES ADICIONALES");
+lines.push("7. INDICACIONES ADICIONALES");
 lines.push("   Reposo relativo. Mosquitero / prevención de picaduras. Vigilar signos de alarma y de sobrehidratación (edema, disnea, crepitantes).");
 lines.push("");
 lines.push(`Elaborado en SIMAC-D · ${val("institucion")||"Institución de salud"}`);
@@ -1822,6 +1954,14 @@ document.getElementById("appLogoImg").src=svg;
 // ── HIDRATACIÓN ────────────────────────────────────────────────────────────
 let registros=[];
 
+function resetHidClaseAuto(){
+const el=document.getElementById("hidClase");
+const badge=document.getElementById("hidClaseSyncBadge");
+if(el){delete el.dataset.userEdited;}
+if(badge)badge.textContent="(🔄 auto)";
+if(typeof evaluarAuto==="function")evaluarAuto();
+calcHidMetas();
+}
 function calcHidMetas(){
   const peso=parseFloat(document.getElementById("hidPeso").value)||0;
   const clase=document.getElementById("hidClase").value;
@@ -1856,57 +1996,79 @@ function calcOMSFluidos(){
   const box=document.getElementById("omsFluidosResult");
   if(!box)return;
   if(!peso){box.innerHTML=`<div class="alerta-box azul">Ingrese el peso arriba para calcular el esquema.</div>`;return;}
+  const comorbido=tieneComorbilidadORiesgo(getActivos().comorbilidades);
   let dynHtml="";
   // MOTOR DE FLUIDOTERAPIA DINÁMICA: combina Índice de Choque, presión de pulso,
-  // hematocrito seriado y diuresis horaria (respuesta a cada bolo) para recomendar
-  // la siguiente acción, en vez de mostrar solo un esquema estático fijo.
+  // hematocrito seriado y diuresis horaria (respuesta a cada bolo) para recomendar la
+  // siguiente acción exacta del algoritmo OPS/OMS 2020, en vez de un texto genérico.
   if(grupo!=="A"){
     const refract=typeof detectarChoqueRefractario==="function"?detectarChoqueRefractario():{refractario:false,motivos:[]};
     const last=(typeof trendData!=="undefined"&&trendData.length)?trendData[trendData.length-1]:null;
     const rangoOms=rangoPorEdad(num("edad"));
     const siAltoOms=rangoOms?rangoOms.siAlto:1.0;
     const persisteChoque=last&&((last.si>=siAltoOms)||(last.pp>0&&last.pp<=20)||(last.gu>0&&last.gu<0.5));
+    const boloNum=(ultimoBolo&&ultimoBolo.grupo===grupo)?(ultimoBolo.boloCount||1):0;
     let accionTitulo,accionTexto,sev;
-    if(refract.refractario){
+    if(refract.refractario||boloNum>=3&&persisteChoque){
       sev="rojo";
       accionTitulo="🚨 CHOQUE REFRACTARIO — escalar manejo";
-      accionTexto=`No hay respuesta adecuada pese a los bolos administrados (${refract.motivos.join("; ")}). <b>Recomendación:</b> repetir bolo / considerar coloide, iniciar soporte vasopresor, traslado o escalamiento a UCI, y descartar sangrado oculto, miocarditis o sepsis concomitante.`;
+      const motivosTxt=refract.motivos.length?refract.motivos.join("; "):"persiste choque pese a 3 bolos administrados";
+      accionTexto=`No hay respuesta adecuada pese al manejo (${motivosTxt}). Según el algoritmo: determinar función de bomba y considerar aminas, evaluar acidosis persistente y riesgo de hemorragia oculta, valorar bolos adicionales de coloide, y manejar de preferencia en UCI.`;
     }else if(last&&persisteChoque){
       sev="naranja";
-      accionTitulo=grupo==="C"?"🔁 Repetir bolo (persiste choque)":"⬆️ Aumentar a 5–7 mL/kg/h";
-      accionTexto=`Última medición registrada (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. No reducir el aporte de fluidos todavía; reevalúe en 15–30 min tras la siguiente intervención.`;
+      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
+      const tiempo=grupo==="C"?"15–30 min":"1 h";
+      accionTitulo=`🔁 Repetir bolo (${boloNum+1}ª carga) — persiste choque`;
+      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>choque persistente</b>. Administrar <b>${bolo} mL</b> en ${tiempo} (carga ${boloNum+1} de 3 antes de reclasificar). No reducir el goteo todavía.`;
     }else if(last&&!persisteChoque){
       sev="verde";
       accionTitulo="⬇️ Reducir al siguiente escalón";
-      accionTexto=`Última medición registrada (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>mejoría hemodinámica</b>. Puede continuar el descenso escalonado del esquema y seguir reevaluando cada 1–2 h.`;
+      accionTexto=`Última medición (${last.hora}): ÍC=${last.si?last.si.toFixed(2):"—"}, PP=${last.pp||"—"} mmHg, GU=${last.gu||"—"} mL/kg/h — sugiere <b>mejoría clínica</b>. Continúe el descenso escalonado del esquema de referencia (abajo) y siga reevaluando en el intervalo indicado.</b>`;
     }else{
       sev="azul";
-      accionTitulo=grupo==="C"?"▶️ Iniciar bolo inicial":"▶️ Iniciar infusión";
-      accionTexto="Aún no hay mediciones seriadas registradas. Registre Índice de Choque, presión de pulso, hematocrito y diuresis en «Tendencia Serial» después de cada intervención para activar el ajuste dinámico automático.";
+      const bolo=grupo==="C"?Math.round(peso*20):Math.round(peso*(comorbido?5:10));
+      const tiempo=grupo==="C"?"15–30 min":"1 h";
+      accionTitulo="▶️ Iniciar bolo inicial";
+      accionTexto=`Administrar <b>${bolo} mL</b> en ${tiempo}${comorbido&&grupo!=="C"?" (dosis reducida por comorbilidad/adulto mayor)":""}. Registre PA, FC, llenado capilar, Hto y diuresis en «Tendencia Serial» al reevaluar, para activar el ajuste automático del siguiente paso.`;
     }
     dynHtml=`<div class="alerta-box ${sev}" style="margin-bottom:10px"><b>🎯 Recomendación dinámica actual — ${accionTitulo}</b><br>${accionTexto}</div>`;
+    if(comorbido)dynHtml+=`<div class="alerta-box amarillo" style="margin-bottom:10px">⚖️ Paciente con <b>comorbilidad, riesgo social o ≥65 años</b> detectado — se aplica el esquema de volúmenes reducidos del algoritmo OPS/OMS 2020.</div>`;
   }
   let html="";
   if(grupo==="A"){
     const min=Math.round(peso*60),max=Math.round(peso*80);
-    html=`<div class="alerta-box verde">🏠 <b>Grupo A (vía oral):</b> ${min}–${max} mL/día (60–80 mL/kg/día) fraccionados en tomas frecuentes.<br>Reevaluar diariamente: tolerancia oral, diuresis y aparición de signos de alarma.</div>`;
+    html=`<div class="alerta-box verde">🏠 <b>Grupo A (vía oral):</b> ${min}–${max} mL/día (60–80 mL/kg/día) fraccionados en tomas frecuentes.<br>Reevaluar diariamente: tolerancia oral, diuresis y aparición de signos de alarma. Monitoreo cada 24–48h y hasta 48h después del descenso de la fiebre sin antipiréticos.</div>`;
   }else if(grupo==="B"){
-    const r1=Math.round(peso*5),r1b=Math.round(peso*7);
-    const r2=Math.round(peso*3),r2b=Math.round(peso*5);
-    const r3=Math.round(peso*2),r3b=Math.round(peso*3);
-    html=`<div class="alerta-box amarillo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OMS/OPS</span><br>🏥 <b>Grupo B (IV):</b><br>
-1) <b>${r1}–${r1b} mL/h</b> (5–7 mL/kg/h) × 1–2 horas → reevaluar PA, FC, Hto, GU.<br>
-2) Si mejora clínicamente: reducir a <b>${r2}–${r2b} mL/h</b> (3–5 mL/kg/h) × 2–4 horas → reevaluar.<br>
-3) Si continúa mejorando: reducir a <b>${r3}–${r3b} mL/h</b> (2–3 mL/kg/h), ajustar según respuesta.<br>
-<span style="font-weight:700">Reevaluar en cada paso: PA, FC, Hto, diuresis. Si empeora, escalar a manejo de Grupo C.</span></div>`;
+    if(comorbido){
+      const b1=Math.round(peso*5);
+      const r1=Math.round(peso*4),r2=Math.round(peso*3),r3=Math.round(peso*2);
+      html=`<div class="alerta-box amarillo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OPS/OMS 2020 — Grupo B2 CON comorbilidad/adulto mayor</span><br>🏥 <b>DCSA + comorbilidad o ≥65 años (IV):</b><br>
+1) Bolo inicial: <b>${b1} mL</b> (5 mL/kg) en 1 hora → reevaluar.<br>
+2) Mejoría → reducir a <b>${r1} mL/h</b> (4 mL/kg/h) × 2–4h → reevaluar → mejoría → <b>${r2} mL/h</b> (3 mL/kg/h) × 2–4h → reevaluar → mejoría → <b>${r3} mL/h</b> (2 mL/kg/h) × 2–4h.<br>
+3) Sin mejoría en cualquier paso: repetir bolo de <b>${b1} mL</b> en 1h (hasta 3 cargas totales). Si persiste sin mejoría tras la 3ª carga: <b>clasificar como Dengue Grave y manejar como Grupo C</b>.<br>
+<span style="font-weight:700">Mejoría clínica = desaparición de signos de alarma + signos vitales estables + diuresis normal/aumentada + Hto en descenso + buena tolerancia oral + recuperación del apetito.</span></div>`;
+    }else{
+      const b1=Math.round(peso*10);
+      const r1=Math.round(peso*5),r1b=Math.round(peso*7);
+      const r2=Math.round(peso*3),r2b=Math.round(peso*5);
+      const r3=Math.round(peso*2),r3b=Math.round(peso*4);
+      html=`<div class="alerta-box amarillo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OPS/OMS 2020 — Grupo B2</span><br>🏥 <b>DCSA sin comorbilidad (IV):</b><br>
+1) Bolo inicial: <b>${b1} mL</b> (10 mL/kg) en 1 hora → reevaluar.<br>
+2) Mejoría → reducir a <b>${r1}–${r1b} mL/h</b> (5–7 mL/kg/h) × 2–4h → reevaluar → mejoría → <b>${r2}–${r2b} mL/h</b> (3–5 mL/kg/h) × 2–4h → reevaluar → mejoría → <b>${r3}–${r3b} mL/h</b> (2–4 mL/kg/h) × 24–48h.<br>
+3) Sin mejoría en cualquier paso: repetir bolo de <b>${b1} mL</b> en 1h (hasta 3 cargas totales). Si persiste sin mejoría tras la 3ª carga: <b>clasificar como Dengue Grave y manejar como Grupo C</b>.<br>
+<span style="font-weight:700">Mejoría clínica = desaparición de signos de alarma + signos vitales estables + diuresis normal/aumentada + Hto en descenso + buena tolerancia oral + recuperación del apetito.</span></div>`;
+    }
   }else{
-    const bolo1=Math.round(peso*10),bolo2=Math.round(peso*20);
-    const p10=Math.round(peso*10),p7=Math.round(peso*7),p5=Math.round(peso*5),p3=Math.round(peso*3);
-    html=`<div class="alerta-box rojo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OMS/OPS</span><br>🚨 <b>Grupo C — Choque (IV urgente):</b><br>
-1) Bolo inicial: <b>${bolo1}–${bolo2} mL</b> (10–20 mL/kg) en 15–30 minutos.<br>
-2) Reevaluar inmediatamente. Si mejora: continuar con ${p10} mL/h (10 mL/kg/h) × 1h, luego reducir progresivamente a ${p7}, ${p5}, ${p3} mL/h (7→5→3 mL/kg/h) según respuesta.<br>
-3) Si NO mejora tras el primer bolo: repetir bolo, considerar coloide, y evaluar vasopresores / UCI.<br>
-<span style="font-weight:700">Reevaluación continua: PA, FC, llenado capilar, Hto, diuresis cada 15–30 min.</span></div>`;
+    const b1=Math.round(peso*20);
+    const p10=Math.round(peso*10),p7=Math.round(peso*5),p7b=Math.round(peso*7),p5=Math.round(peso*3),p5b=Math.round(peso*5),p3=Math.round(peso*2),p3b=Math.round(peso*4);
+    html=`<div class="alerta-box rojo"><span style="font-size:.68rem;opacity:.75">📋 Esquema de referencia OPS/OMS 2020 — Grupo C</span><br>🚨 <b>Choque hipovolémico por Dengue Grave:</b><br>
+<b>ABC + monitoreo de signos vitales c/5–30 min + oxigenoterapia</b><br>
+1) Bolo inicial: <b>${b1} mL</b> (20 mL/kg) en 15–30 minutos → reevaluar.<br>
+2) Mejoría → reducir a <b>${p10} mL/h</b> (10 mL/kg/h) × 1–2h → mejoría → <b>${p7}–${p7b} mL/h</b> (5–7 mL/kg/h) × 4–6h → mejoría → <b>${p5}–${p5b} mL/h</b> (3–5 mL/kg/h) × 2–4h → mejoría → <b>${p3}–${p3b} mL/h</b> (2–4 mL/kg/h) × 24–48h.<br>
+3) Persisten signos de choque: repetir bolo de <b>${b1} mL</b> en 15–30min (hasta 3 cargas totales).<br>
+4) Choque persistente tras 3ª carga: determinar función de bomba y considerar aminas; evaluar acidosis persistente y riesgo de hemorragia oculta; considerar coloide; manejar de preferencia en UCI.<br>
+${comorbido?`<span style="font-weight:700">⚖️ Comorbilidad/embarazo/≥65 años: el manejo debe ser individualizado y con monitoreo estricto.</span><br>`:""}
+<span style="font-weight:700">Mejoría clínica = remisión de signos de choque + signos vitales estables + diuresis normal/aumentada + Hto en descenso.</span></div>`;
   }
   box.innerHTML=dynHtml+html;
 }
@@ -1915,12 +2077,17 @@ let ultimoBolo=null;
 let boloInterval=null;
 function registrarBolo(){
   const grupo=document.getElementById("omsGrupo")?.value||"B";
-  const minutos=grupo==="C"?20:grupo==="B"?90:0;
+  // Intervalo de reevaluación del PRIMER bolo según el algoritmo OPS/OMS 2020: Grupo B
+  // (DCSA, con o sin comorbilidad) se reevalúa a la 1 hora; Grupo C (choque) a los 15–30 min.
+  const minutos=grupo==="C"?20:grupo==="B"?60:0;
   if(minutos===0){alert("El Grupo A no requiere bolo IV / reevaluación programada.");return;}
-  ultimoBolo={time:Date.now(),grupo,minutos};
+  const boloCount=(ultimoBolo&&ultimoBolo.grupo===grupo)?(ultimoBolo.boloCount||1)+1:1;
+  if(boloCount>3){alert("Ya se registraron 3 cargas en este grupo sin mejoría. Según el algoritmo OPS/OMS, este paciente debe reclasificarse como Dengue Grave y manejarse como Grupo C (si no lo está ya).");}
+  ultimoBolo={time:Date.now(),grupo,minutos,boloCount};
   if(boloInterval)clearInterval(boloInterval);
   boloInterval=setInterval(actualizarRecordatorioBolo,15000);
   actualizarRecordatorioBolo();
+  if(typeof calcOMSFluidos==="function")calcOMSFluidos();
   renderCicloOMS();
 }
 function actualizarRecordatorioBolo(){
