@@ -22,15 +22,34 @@ body.dark-mode .input-error{background:#3B1219!important}
 body.dark-mode .trat-card{background:#0F172A}
 body.dark-mode .trat-card.urgente{background:#3B1219}
 body.dark-mode .trat-card.advertencia{background:#3B2E0A}
+body.dark-mode .trat-card.verde{background:#0B2A1C}
+body.dark-mode .trat-card.morado{background:#241B3B}
+body.dark-mode .trat-title{color:#F1F5F9}
+body.dark-mode .trat-body{color:#CBD5E1}
+body.dark-mode .trat-body b,body.dark-mode .trat-body strong{color:#F1F5F9}
 body.dark-mode .hid-stat{background:#0F172A}
 body.dark-mode .hid-stat.warn{background:#3B2E0A}
 body.dark-mode .hid-stat.danger{background:#3B1219}
+body.dark-mode .hid-stat.ok .hid-stat-interp{color:#86EFAC}
+body.dark-mode .hid-stat.warn .hid-stat-interp{color:#FCD34D}
+body.dark-mode .hid-stat.danger .hid-stat-interp{color:#FCA5A5}
+body.dark-mode .hid-meta-box{background:#0F172A}
+body.dark-mode .hid-meta-title,body.dark-mode .hid-meta-val{color:#93C5FD}
+body.dark-mode .hid-meta-lbl{color:#7DD3FC}
 body.dark-mode .diuresis-table th{background:#0F172A}
-body.dark-mode .diuresis-table td{border-bottom-color:#334155}
+body.dark-mode .diuresis-table td{border-bottom-color:#334155;color:#E2E8F0}
 body.dark-mode .diuresis-table tr:hover td{background:#152238}
 body.dark-mode .anx-doc{background:#1E293B;border-color:#475569;color:#E2E8F0}
+body.dark-mode .anx-label,body.dark-mode .anx-num,body.dark-mode .anx-firma-nombre{color:#F1F5F9}
+body.dark-mode .anx-val{color:#CBD5E1}
+body.dark-mode .anx-blank{color:#64748B;border-bottom-color:#475569}
+body.dark-mode .anx-firma-cargo,body.dark-mode .anx-firma-inst{color:#94A3B8}
+body.dark-mode .anx-exam-list{color:#7FFFD4}
 body.dark-mode .login-logo,body.dark-mode .header-logo-wrap{background:#1E293B}
 body.dark-mode .theme-toggle-btn{background:rgba(255,255,255,.12)}
+body.dark-mode .card h2,body.dark-mode .card-header h2{color:inherit}
+body.dark-mode .result-placeholder{color:#94A3B8}
+body.dark-mode pre{background:#0F172A!important;color:#E2E8F0!important;border-color:#334155!important}
 .theme-toggle-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:8px 12px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
 .theme-toggle-btn:hover{background:rgba(255,255,255,.2)}
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,#000 0%,#021a10 20%,#06402B 55%,#0a6040 80%,#000 100%);position:fixed;inset:0;z-index:9999}
@@ -54,19 +73,21 @@ body.dark-mode .theme-toggle-btn{background:rgba(255,255,255,.12)}
 #appScreen{display:none}
 .header{background:linear-gradient(105deg,#000 0%,#021a10 12%,#06402B 30%,#085c3a 48%,#06402B 68%,#021a10 85%,#000 100%);color:#fff;padding:0;box-shadow:0 4px 24px rgba(0,0,0,.35);position:relative;overflow:hidden}
 .header::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06) 0%,transparent 100%);pointer-events:none}
-.header-inner{display:flex;align-items:stretch;justify-content:space-between;max-width:1200px;margin:0 auto;padding:0 24px}
-.header-left{padding:16px 0;display:flex;align-items:center;gap:14px}
-.header-logo-wrap{width:62px;height:62px;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);padding:3px}
+.header-inner{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;max-width:1200px;margin:0 auto;padding:8px 24px}
+.header-left{padding:4px 0;display:flex;align-items:center;gap:10px}
+.header-logo-wrap{width:42px;height:42px;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.3);padding:2px}
 .header-logo-wrap img{width:100%;height:100%;object-fit:contain;border-radius:0}
-.header-title h1{font-size:1rem;font-weight:600;line-height:1.2;font-family:'Montserrat',sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.3px;opacity:.9}
-.header-title .simac{font-size:2.4rem;font-weight:800;letter-spacing:2px;display:block;line-height:1;font-family:'EB Garamond',serif;text-shadow:0 2px 12px rgba(0,0,0,.5)}
-.header-title p{font-size:.68rem;font-weight:600;opacity:.75;margin-top:3px;font-family:'Source Serif 4',serif;font-style:italic}
-.header-right{background:rgba(0,0,0,.2);border-left:1px solid rgba(255,255,255,.15);padding:14px 20px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;min-width:210px}
-.header-right .ops-badge{font-size:.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;opacity:.65;margin-bottom:3px}
-.header-right .autor{font-size:.9rem;font-weight:800;color:#7FFFD4}
-.header-right .autor-sub{font-size:.68rem;opacity:.65;font-family:'Source Serif 4',serif;font-style:italic;margin-top:1px}
-.header-right .version{font-size:.6rem;opacity:.45;margin-top:6px;letter-spacing:.5px}
-.logout-btn{margin-top:10px;padding:5px 12px;background:rgba(6,64,43,.4);border:1px solid rgba(90,200,140,.3);border-radius:20px;color:#fff;font-size:.65rem;font-weight:600;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;font-family:'Montserrat',sans-serif}
+.header-title h1{font-size:.72rem;font-weight:600;line-height:1.15;font-family:'Montserrat',sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.2px;opacity:.9}
+.header-title .simac{font-size:1.5rem;font-weight:800;letter-spacing:1.5px;display:block;line-height:1.05;font-family:'EB Garamond',serif;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.header-title p{font-size:.58rem;font-weight:600;opacity:.7;margin-top:1px;font-family:'Source Serif 4',serif;font-style:italic;display:none}
+.header-right{background:transparent;border:none;padding:2px 0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;justify-content:flex-end;text-align:right;min-width:0}
+.header-author{text-align:right;line-height:1.25}
+.header-right .ops-badge{font-size:.55rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;display:block}
+.header-right .autor{font-size:.78rem;font-weight:800;color:#7FFFD4;display:block}
+.header-right .autor-sub{font-size:.6rem;opacity:.65;font-family:'Source Serif 4',serif;font-style:italic;display:block}
+.header-right .version{font-size:.55rem;opacity:.45;letter-spacing:.4px;display:block}
+.header-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.logout-btn{margin-top:0;padding:5px 10px;background:rgba(6,64,43,.4);border:1px solid rgba(90,200,140,.3);border-radius:20px;color:#fff;font-size:.6rem;font-weight:600;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;transition:all .2s;font-family:'Montserrat',sans-serif}
 .logout-btn:hover{background:rgba(255,255,255,.25)}
 .tabs-bar{background:#fff;border-bottom:2px solid var(--gris-borde);box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .tabs-inner{max-width:1200px;margin:0 auto;display:flex;padding:0 16px;overflow-x:auto;scrollbar-width:thin}
@@ -295,7 +316,7 @@ textarea{resize:vertical;min-height:70px}
  <button class="login-btn" id="loginSubmitBtn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
  <div class="login-footer">
  <div class="login-footer-name">Dr. Rhonnie Duarte M.</div>
- <div class="login-footer-sub">Médico General · Autor del Sistema</div>
+ <div class="login-footer-sub">Doctor en Medicina y Cirugía · Autor del Sistema</div>
  <div class="login-footer-copy">© 2026 SIMAC-D · Todos los derechos reservados · Versión OPS/OMS 2020</div>
  </div>
  </div>
@@ -336,14 +357,18 @@ textarea{resize:vertical;min-height:70px}
  </div>
  </div>
  <div class="header-right">
+ <div class="header-author">
  <span class="ops-badge">Elaborado por</span>
  <span class="autor">Dr. Rhonnie Duarte M.</span>
- <span class="autor-sub">Médico General</span>
+ <span class="autor-sub">Doctor en Medicina y Cirugía</span>
  <span class="version">OPS/OMS · Junio 2020</span>
- <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Modo oscuro</button>
- <button class="logout-btn" style="background:#0077B6" onclick="guardarBorrador(true)">💾 Guardar local</button>
- <button class="logout-btn" style="background:#64748B" onclick="borrarBorrador()">🗑️ Borrar local</button>
- <button class="logout-btn" onclick="doLogout()">⏻ Cerrar Sesión</button>
+ </div>
+ <div class="header-actions">
+ <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Oscuro</button>
+ <button class="logout-btn" style="background:#0077B6" onclick="guardarBorrador(true)">💾 Guardar</button>
+ <button class="logout-btn" style="background:#64748B" onclick="borrarBorrador()">🗑️ Borrar</button>
+ <button class="logout-btn" onclick="doLogout()">⏻ Salir</button>
+ </div>
  </div>
  </div>
  <div id="draftStatus" style="font-size:.62rem;color:var(--texto-suave,#6B7280);text-align:right;padding:0 24px 6px;line-height:1.4"></div>
