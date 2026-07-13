@@ -234,7 +234,7 @@ textarea{resize:vertical;min-height:70px}
 .anx-firma-inst{font-size:.62rem;color:#94A3B8;font-style:italic;margin-top:2px}
 .anx-footer-doc{text-align:center;font-size:.6rem;color:#94A3B8;padding:8px 16px;border-top:1px solid #eef2f7;background:#FAFBFC;font-style:italic}
 .footer{text-align:center;padding:14px;font-size:.65rem;color:var(--texto-suave);border-top:1px solid var(--gris-borde);background:#fff}
-@media print{.anx-doc{box-shadow:none;border:1px solid #000}.tabs-bar,.header,.footer,.plantilla-header,.plantilla-actions{display:none!important}.plantilla-body{padding:0}.tab-panel{display:block!important}}
+@media print{.anx-doc{box-shadow:none;border:1px solid #000}.tabs-bar,.header,.footer,.plantilla-header,.plantilla-actions,.quick-select,.btn-evaluar,.btn-copy,.btn-add-diuresis,.btn-reset-hid,.logout-btn,.theme-toggle-btn,#autoEvalBadge,#draftStatus{display:none!important}.plantilla-body{padding:0}body.dark-mode{--gris-bg:#F4F6F8;--gris-borde:#E2E8F0;--blanco:#fff;--texto:#1E293B;--texto-suave:#6B7280}body.dark-mode .card,body.dark-mode .plantilla-container,body.dark-mode .anx-doc,body.dark-mode pre{background:#fff!important;color:#1E293B!important}body.dark-mode .trat-body,body.dark-mode .anx-label,body.dark-mode .anx-num,body.dark-mode .anx-val,body.dark-mode .anx-firma-nombre{color:#1E293B!important}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .animated{animation:fadeIn .35s ease}
 .card-header.hidra{background:linear-gradient(90deg,#EFF6FF,#DBEAFE)}
@@ -415,6 +415,10 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>¿Esta institución cuenta con UCI?</label>
  <select id="tieneUCI"><option value="si">Sí</option><option value="no">No</option><option value="nose">No sé / verificar</option></select>
  </div>
+ <div class="form-group"><label>Embarazo</label>
+ <select id="embarazoTrimestre" onchange="checkEmbarazo()"><option value="no">No embarazada</option><option value="1">1er trimestre</option><option value="2">2do trimestre</option><option value="3">3er trimestre</option><option value="puerperio">Puerperio (≤42 días postparto)</option></select>
+ </div>
+ <div class="form-group span2" id="embarazoBox"></div>
  </div>
  </div>
  </div>
@@ -558,6 +562,31 @@ textarea{resize:vertical;min-height:70px}
  <div class="form-group"><label>ScvO₂ (%)</label><input type="number" id="scvo2" placeholder="%" min="0" max="100" oninput="checkPerfusionAvanzada()"></div>
  <div class="form-group span2" id="perfusionAvanzadaBox"></div>
  <div class="form-group span2"><label>Otros exámenes (especificar)</label><textarea id="labOtros" placeholder="Otros resultados de laboratorio relevantes..."></textarea></div>
+ </div>
+ </div>
+ </div>
+
+ <div class="card">
+ <div class="card-header exam">
+ <div class="card-icon exam">🔍</div>
+ <h2>Ecografía Clínica (POCUS)</h2>
+ </div>
+ <div class="card-body">
+ <div class="form-grid">
+ <div class="form-group"><label>Vena cava inferior (VCI)</label>
+ <select id="vci" onchange="checkPOCUS()"><option value="">No evaluada</option><option value="normal">Normal / no colapsable</option><option value="colapsable">Colapsable &gt;50% (hipovolemia)</option><option value="dilatada">Dilatada / sin colapso (sobrecarga)</option></select>
+ </div>
+ <div class="form-group"><label>Derrame pleural (US)</label>
+ <select id="derramePleuralUS" onchange="checkPOCUS()"><option value="no">No</option><option value="leve">Leve</option><option value="moderado">Moderado</option><option value="masivo">Masivo</option></select>
+ </div>
+ <div class="form-group"><label>Ascitis (US)</label>
+ <select id="ascitisUS" onchange="checkPOCUS()"><option value="no">No</option><option value="si">Sí</option></select>
+ </div>
+ <div class="form-group"><label>Líneas B pulmonares</label>
+ <select id="lineasB" onchange="checkPOCUS()"><option value="no">No / &lt;3 por campo</option><option value="si">Sí, difusas bilaterales (edema)</option></select>
+ </div>
+ <div class="form-group span2" id="pocusBox"></div>
+ <div class="form-group span2" style="font-size:.65rem;color:var(--texto-suave);font-style:italic">*POCUS es un complemento al examen clínico, no lo reemplaza. Requiere entrenamiento y equipo disponible.*</div>
  </div>
  </div>
  </div>
@@ -1102,7 +1131,12 @@ const SINTOMAS_DATA=[
 {label:"Enfermedades hemolíticas",tipo:"comorbilidad"},
 {label:"Riesgo social (vive solo/lejos, sin transporte, pobreza extrema)",tipo:"comorbilidad"},
 {label:"Edad ≤1 año o ≥65 años",tipo:"comorbilidad"},
-{label:"Anticoagulantes / Asma",tipo:"comorbilidad"}
+{label:"Anticoagulantes / Asma",tipo:"comorbilidad"},
+{label:"Ictericia + mialgias intensas + IRA (sospechar Leptospirosis)",tipo:"coinfeccion"},
+{label:"Patrón febril cíclico / viaje a zona endémica de Malaria",tipo:"coinfeccion"},
+{label:"Artralgia poliarticular simétrica intensa (sospechar Chikungunya)",tipo:"coinfeccion"},
+{label:"Conjuntivitis + exantema pruriginoso sin trombocitopenia marcada (sospechar Zika)",tipo:"coinfeccion"},
+{label:"Foco infeccioso adicional / criterios de sepsis",tipo:"coinfeccion"}
 ];
 const EXAMENES_DATA=[
 {titulo:"🧪 Laboratorio Básico",color:"#0077B6",items:["Hemograma completo","Hematocrito","Recuento de plaquetas","Leucocitos y diferencial","Glucosa","Creatinina / BUN","Electrolitos (Na, K, Cl)"]},
@@ -1118,7 +1152,8 @@ const sections=[
 {titulo:"⚠ Signos de alarma (DCSA)",color:"#9F1239",tipos:["alarma"]},
 {titulo:"🚨 Signos de dengue grave (DG)",color:"#7C3AED",tipos:["grave"]},
 {titulo:"🏥 Otros criterios de hospitalización (OPS 2020)",color:"#B45309",tipos:["hospcriterio"]},
-{titulo:"+ Comorbilidades / Riesgo social",color:"#166534",tipos:["comorbilidad"]}
+{titulo:"+ Comorbilidades / Riesgo social",color:"#166534",tipos:["comorbilidad"]},
+{titulo:"🦟 Diagnóstico Diferencial / Coinfecciones a Considerar",color:"#0369A1",tipos:["coinfeccion"]}
 ];
 let html="";
 sections.forEach(s=>{
@@ -1219,7 +1254,7 @@ restoreDraftPrompt();
 // en localStorage, exclusivamente en este navegador/dispositivo, para evitar perder
 // el trabajo si se recarga la página accidentalmente.
 const DRAFT_KEY="simacd_borrador_v1";
-const DRAFT_FIELD_IDS=["apellidos","nombres","cedula","sexo","edad","peso","talla","diasFiebre","temperatura","tensionArterial","frecCard","frecResp","spo2","hematocrito","plaquetas","leucocitos","hemoglobina","ast","alt","creatinina","urea","glucosa","proteinasAlbumina","lactato","bicarbonato","excesoBases","scvo2","labOtros","viaje","llenadoCapilar","pulsosPerif","extremidades","estadoMental","feverCedio","horasDefervescencia","antecedentes","observaciones","institucion","tieneUCI","hidPeso","hidClase","omsGrupo"];
+const DRAFT_FIELD_IDS=["apellidos","nombres","cedula","sexo","edad","peso","talla","diasFiebre","temperatura","tensionArterial","frecCard","frecResp","spo2","hematocrito","plaquetas","leucocitos","hemoglobina","ast","alt","creatinina","urea","glucosa","proteinasAlbumina","lactato","bicarbonato","excesoBases","scvo2","labOtros","viaje","llenadoCapilar","pulsosPerif","extremidades","estadoMental","feverCedio","horasDefervescencia","antecedentes","observaciones","institucion","tieneUCI","embarazoTrimestre","vci","derramePleuralUS","ascitisUS","lineasB","hidPeso","hidClase","omsGrupo"];
 function guardarBorrador(manual){
 try{
 const datos={};
@@ -1278,16 +1313,17 @@ function toggle(el){el.classList.toggle("active");scheduleAutoEval();}
 function toggleExam(el){el.classList.toggle("active");}
 function getActivos(){
 const items=document.querySelectorAll(".sintoma-item.active");
-const grales=[],alarmas=[],graves=[],comorbilidades=[],hospcriterio=[];
+const grales=[],alarmas=[],graves=[],comorbilidades=[],hospcriterio=[],coinfeccion=[];
 items.forEach(el=>{
 const txt=el.querySelector("span").textContent;
 if(el.classList.contains("alarma"))alarmas.push(txt);
 else if(el.classList.contains("grave"))graves.push(txt);
 else if(el.classList.contains("comorbilidad"))comorbilidades.push(txt);
 else if(el.classList.contains("hospcriterio"))hospcriterio.push(txt);
+else if(el.classList.contains("coinfeccion"))coinfeccion.push(txt);
 else grales.push(txt);
 });
-return{grales,alarmas,graves,comorbilidades,hospcriterio};
+return{grales,alarmas,graves,comorbilidades,hospcriterio,coinfeccion};
 }
 function val(id){return document.getElementById(id)?.value?.trim()||"";}
 function num(id){return parseFloat(val(id))||0;}
@@ -1442,6 +1478,47 @@ else if(scvo2>90)msgs.push({sev:"amarillo",txt:`⚠ ScvO₂ ${scvo2}% (&gt;90%) 
 else msgs.push({sev:"verde",txt:`✅ ScvO₂ ${scvo2}% — dentro de rango objetivo (≥70%).`});
 }
 box.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
+}
+// Embarazo modifica FC, PA y Hto basales — sin esto, esos cambios fisiológicos podrían
+// malinterpretarse como signos de alarma o pasar por alto una hemoconcentración relativa.
+// POCUS (ecografía clínica en punto de atención): VCI colapsable sugiere hipovolemia; VCI
+// dilatada, derrame masivo, ascitis o líneas B difusas sugieren sobrecarga — se integran
+// directamente al motor de sobrecarga hídrica (evaluarAvanceInfusion), no son solo informativos.
+function checkPOCUS(){
+const box=document.getElementById("pocusBox");
+if(!box)return;
+const msgs=[];
+if(val("vci")==="colapsable")msgs.push({sev:"amarillo",txt:"📉 VCI colapsable &gt;50% — sugiere hipovolemia / respuesta a fluidos probable."});
+if(val("vci")==="dilatada")msgs.push({sev:"rojo",txt:"📈 VCI dilatada / sin colapso — sugiere sobrecarga de volumen o disfunción cardíaca. Correlacionar antes de continuar expandiendo."});
+if(val("derramePleuralUS")==="masivo")msgs.push({sev:"rojo",txt:"🫁 Derrame pleural masivo — considerar reducir aporte IV; evaluar necesidad de toracocentesis si compromiso respiratorio."});
+else if(val("derramePleuralUS")==="moderado")msgs.push({sev:"amarillo",txt:"🫁 Derrame pleural moderado — vigilar progresión."});
+if(val("ascitisUS")==="si")msgs.push({sev:"amarillo",txt:"💧 Ascitis presente — signo de fuga plasmática/sobrecarga; correlacionar con balance hídrico."});
+if(val("lineasB")==="si")msgs.push({sev:"rojo",txt:"🫁 Líneas B difusas bilaterales — sugiere edema pulmonar intersticial. Señal de alarma para reducir/suspender fluidos IV."});
+box.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
+if(typeof evaluarAvanceInfusion==="function")evaluarAvanceInfusion();
+if(typeof scheduleAutoEval==="function")scheduleAutoEval();
+}
+function checkEmbarazo(){
+const trimestre=val("embarazoTrimestre");
+const box=document.getElementById("embarazoBox");
+const embarazoCheckbox=[...document.querySelectorAll(".sintoma-item.comorbilidad")].find(el=>el.querySelector("span").textContent==="Embarazo");
+if(embarazoCheckbox){
+const debeEstarActivo=trimestre!=="no";
+if(debeEstarActivo&&!embarazoCheckbox.classList.contains("active"))embarazoCheckbox.classList.add("active");
+if(!debeEstarActivo&&embarazoCheckbox.classList.contains("active"))embarazoCheckbox.classList.remove("active");
+}
+if(!box)return;
+if(trimestre==="no"){box.innerHTML="";if(typeof scheduleAutoEval==="function")scheduleAutoEval();return;}
+const labels={"1":"1er trimestre","2":"2do trimestre","3":"3er trimestre",puerperio:"puerperio (≤42 días postparto)"};
+let notas=`<b>🤰 Consideraciones obstétricas — ${labels[trimestre]}:</b><ul>
+<li>La FC basal aumenta y la PA basal disminuye fisiológicamente en el embarazo — no interpretar aisladamente como signo de alarma sin correlacionar con el resto del cuadro.</li>
+<li>El hematocrito basal está fisiológicamente disminuido por hemodilución — un Hto "normal" puede ya representar hemoconcentración relativa; comparar siempre contra el Hto basal de la paciente, no solo contra rangos poblacionales.</li>
+<li>Valoración obligatoria del <b>binomio materno-fetal</b> (frecuencia cardíaca fetal / movimientos fetales si aplica) junto con la evaluación materna.</li>
+<li>Hospitalización recomendada independientemente de la clasificación de gravedad (mínimo Grupo B1).</li>`;
+if(trimestre==="3")notas+=`<li><b>3er trimestre — alto riesgo:</b> mayor riesgo de sangrado periparto, trabajo de parto pretérmino y transmisión vertical. Manejo conjunto con Obstetricia/Ginecología obligatorio.</li>`;
+notas+="</ul>";
+box.innerHTML=`<div class="alerta-box ${trimestre==="3"?"rojo":"amarillo"}">${notas}</div>`;
+if(typeof scheduleAutoEval==="function")scheduleAutoEval();
 }
 function checkHepatico(){
 const box=document.getElementById("hepaticoBox");
@@ -1601,7 +1678,7 @@ return num("peso")>0||num("temperatura")>0||num("frecCard")>0||val("tensionArter
 }
 function evaluarCore(){
 ultimaEvaluacion=Date.now();
-const{grales,alarmas,graves,comorbilidades,hospcriterio}=getActivos();
+const{grales,alarmas,graves,comorbilidades,hospcriterio,coinfeccion}=getActivos();
 const hemo=calcHemodinamia();
 const clase=clasificar(grales,alarmas,graves,comorbilidades,hemo);
 const peso=num("peso");
@@ -1614,7 +1691,7 @@ const sangradoActivo=alarmas.includes("Sangrado de mucosas")||graves.includes("S
 // para todo lo demás (validaciones, reporte demográfico) se sigue usando el peso real.
 const ajustePeso=calcPesoAjustado(peso,num("talla"),val("sexo"),num("edad"));
 const pesoFluidos=ajustePeso&&ajustePeso.esObeso?ajustePeso.pesoRecomendado:peso;
-renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio);
+renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio,coinfeccion);
 renderTx(clase,pesoFluidos,plaq,hema,spo2,dias,comorbilidades,alarmas,graves,sangradoActivo,ajustePeso,hemo);
 renderOrdenes(clase,pesoFluidos,plaq,hema,dias,sangradoActivo,hemo,ajustePeso);
 autoSelectExams(clase,plaq,hema,spo2,dias,graves,alarmas);
@@ -1735,8 +1812,12 @@ return{nivel:"UCI",css:"rojo",emoji:"🔴",desc:"Ingreso a Unidad de Cuidados In
 }
 const siAlto=hemo.siUmbral?hemo.siUmbral.alto:1.0;
 if(clase==="DG"||hemo.shockIndex>=siAlto||(hemo.pulsePressure>0&&hemo.pulsePressure<=20))return{nivel:"CUIDADOS INTERMEDIOS",css:"naranja",emoji:"🟠",desc:"Choque compensado / signo grave sin criterio absoluto de UCI aún — vigilancia estrecha con capacidad de escalar rápidamente."};
+// Embarazo en 3er trimestre: alto riesgo de sangrado periparto y parto pretérmino — no debe
+// quedar en manejo puramente ambulatorio aunque la clasificación de gravedad sea DSSA.
+if(val("embarazoTrimestre")==="3")return{nivel:"HOSPITALIZACIÓN CON VIGILANCIA ESTRECHA",css:"amarillo",emoji:"🟡",desc:"Embarazo en 3er trimestre — alto riesgo obstétrico. Monitoreo materno-fetal conjunto con Obstetricia."};
 if(clase==="DCSA"&&(alarmas.length>1||hemo.motivos.length>0||comorbilidades.length>0))return{nivel:"HOSPITALIZACIÓN CON VIGILANCIA ESTRECHA",css:"amarillo",emoji:"🟡",desc:"Sala de hospitalización, monitoreo c/1–2h."};
 if(clase==="DCSA")return{nivel:"HOSPITALIZACIÓN CONVENCIONAL",css:"amarillo",emoji:"🟡",desc:"Sala general, monitoreo activo."};
+if(comorbilidades.includes("Embarazo"))return{nivel:"HOSPITALIZACIÓN CONVENCIONAL",css:"amarillo",emoji:"🟡",desc:"Embarazo — observación hospitalaria mínima (Grupo B1) independientemente de la clasificación de gravedad."};
 return{nivel:"OBSERVACIÓN AMBULATORIA",css:"verde",emoji:"🟢",desc:"Manejo domiciliario con controles programados y signos de alarma explicados."};
 }
 function semaforoNivel(clase,alarmas,graves,hemo,refract){
@@ -1759,7 +1840,8 @@ if(nivelConciencia(val("estadoMental"))>=3)uci.push("Encefalopatía / alteració
 if(refract&&refract.refractario)uci.push("Choque refractario a la reanimación con fluidos (ver Tendencia Serial)");
 return{hosp,uci};
 }
-function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio){
+function renderDx(clase,grales,alarmas,graves,comorbilidades,plaq,hema,spo2,dias,hemo,hospcriterio,coinfeccion){
+coinfeccion=coinfeccion||[];
 hospcriterio=hospcriterio||[];
 hemo=hemo||{shockIndex:0,pulsePressure:0,motivos:[]};
 const labels={DSSA:["badge-dssa","✅ Dengue Sin Signos de Alarma"],DCSA:["badge-dcsa","⚠️ Dengue Con Signos de Alarma"],DG:["badge-dg","🚨 Dengue Grave"]};
@@ -1807,13 +1889,14 @@ addSec("Síntomas presentes",grales,"#06402B");
 addSec("Signos de alarma",alarmas,"#C1121F");
 addSec("Signos graves",graves,"#7C3AED");
 addSec("Otros criterios de hospitalización",hospcriterio,"#B45309");
+addSec("🦟 Diagnóstico diferencial / Coinfecciones a considerar",coinfeccion,"#0369A1");
 addSec("Comorbilidades / Factores de riesgo",comorbilidades,"#2D6A4F");
 const crit=criteriosIngresoUCI(alarmas,graves,comorbilidades,hemo,detectarChoqueRefractario());
 if(crit.uci.length>0){html+=`<div class="alerta-box rojo"><b>🚨 Criterios de UCI cumplidos:</b><br>${crit.uci.map(x=>"• "+x).join("<br>")}</div>`;}
 else if(crit.hosp.length>0){html+=`<div class="alerta-box amarillo"><b>🏥 Criterios de hospitalización cumplidos:</b><br>${crit.hosp.map(x=>"• "+x).join("<br>")}</div>`;}
 const refractDx=detectarChoqueRefractario();
 if(refractDx.refractario){
-html+=`<div class="alerta-box rojo"><b>🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial:</b><br>${refractDx.hallazgos.map(h=>`• ${h.texto}<br>&nbsp;&nbsp;↳ <i>${h.complicacion}</i>`).join("<br>")}<br><br><b>Conducta:</b> soporte vasopresor, ingreso/escalamiento a UCI, estudio dirigido de las complicaciones señaladas arriba.</div>`;
+html+=`<div class="alerta-box rojo"><b>🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial:</b><br>${refractDx.hallazgos.map(h=>`• ${h.texto}<br>&nbsp;&nbsp;↳ <i>${h.complicacion}</i>`).join("<br>")}<br><br><b>Conducta:</b> soporte vasopresor (norepinefrina 0.05–0.5 mcg/kg/min IV continua como primera línea, titular a PAM ≥65 mmHg; considerar dobutamina 2–20 mcg/kg/min si predomina disfunción de bomba/miocarditis), ingreso/escalamiento a UCI, estudio dirigido de las complicaciones señaladas arriba.</div>`;
 }
 const feverCedioDx=val("feverCedio");
 const horasDefervDx=num("horasDefervescencia");
@@ -1906,12 +1989,17 @@ const bolus=peso>0?`${(peso*20).toFixed(0)} mL`:"20 mL/kg";
 html+=trat("urgente","⚡ Choque — Resucitación Inmediata (Grupo C)",`<ul>
 <li>Bolo SS 0.9% o Lactato Ringer: <b>${bolus}</b> (20 mL/kg) en 15–30 min. Repetir hasta 3 cargas si persiste choque.</li>
 <li>Mejoría tras bolo: reducir a ${peso>0?(peso*10).toFixed(0)+" mL/h":"10 mL/kg/h"} ×1–2h → ${peso>0?`${(peso*5).toFixed(0)}–${(peso*7).toFixed(0)} mL/h`:"5–7 mL/kg/h"} ×4–6h → ${peso>0?`${(peso*3).toFixed(0)}–${(peso*5).toFixed(0)} mL/h`:"3–5 mL/kg/h"} ×2–4h → ${peso>0?`${(peso*2).toFixed(0)}–${(peso*4).toFixed(0)} mL/h`:"2–4 mL/kg/h"} ×24–48h.</li>
-<li>Choque persistente tras 3ª carga: determinar función de bomba y considerar aminas; evaluar acidosis persistente y hemorragia oculta; considerar coloide; manejo preferente en UCI.</li>
+<li>Choque persistente tras 3ª carga: determinar función de bomba (ecocardiograma si disponible). Iniciar <b>norepinefrina 0.05–0.5 mcg/kg/min IV</b> (primera línea, titular a PAM ≥65 mmHg) o <b>dobutamina 2–20 mcg/kg/min</b> si predomina disfunción de bomba/miocarditis; evaluar acidosis persistente y hemorragia oculta; considerar coloide; manejo preferente en UCI.</li>
 <li>O₂ de alto flujo / soporte ventilatorio si SpO₂&lt;94%</li>
 </ul>`);
 }
 if(spo2>0&&spo2<94){html+=trat("urgente","🫁 Soporte Respiratorio",`SpO₂: ${spo2}%. Oxigenoterapia inmediata. Preparar para ventilación mecánica.`);}
-if(sangradoActivo||graves.includes("Sangrado grave")){html+=trat("urgente","🩸 Hemorragia / Transfusión",`Sangrado activo/grave documentado${plaq>0?` (plaquetas ${plaq}×10³)`:""}. Transfusión urgente. Considerar PFC/crioprecipitado si coagulopatía o CID.`);}
+if(sangradoActivo||graves.includes("Sangrado grave")){html+=trat("urgente","🩸 Hemorragia / Protocolo Transfusional",`Sangrado activo/grave documentado${plaq>0?` (plaquetas ${plaq}×10³)`:""}. Manejo por componentes:<ul>
+<li><b>Concentrado eritrocitario:</b> si Hb &lt;7 g/dl, o Hb &lt;10 g/dl con inestabilidad hemodinámica activa por sangrado. Iniciar con 10 mL/kg (pediatría) o 1 unidad (adulto), reevaluar.</li>
+<li><b>Plasma fresco congelado (PFC):</b> si coagulopatía documentada (TP/TTP prolongados) o CID. 10–15 mL/kg.</li>
+<li><b>Concentrado plaquetario:</b> solo si sangrado activo significativo Y plaquetas &lt;50×10³ (no por cifra aislada sin sangrado).</li>
+<li><b>Crioprecipitado:</b> si fibrinógeno &lt;100 mg/dl o CID con hipofibrinogenemia.</li>
+</ul>`);}
 else if(plaq>0&&plaq<20){html+=trat("advertencia","🩸 Plaquetopenia Severa sin sangrado activo",`Plaquetas ${plaq}×10³. La transfusión NO está indicada solo por la cifra aislada. Vigilancia estricta y evitar procedimientos invasivos no esenciales.`);}
 html+=trat("urgente","👁️ Monitoreo UCI",`<ul>
 <li>Signos vitales c/5–30 min (según algoritmo OPS/OMS 2020)</li>
@@ -1927,7 +2015,7 @@ if(refractTx.refractario){
 const hallazgosHtml=refractTx.hallazgos.map(h=>`<li>${h.texto} → <b>${h.complicacion}</b></li>`).join("");
 html+=trat("urgente","🚨 Choque Refractario — Escalar Manejo",`No hay respuesta adecuada tras los bolos de cristaloides administrados. Hallazgos y complicación específica a descartar en cada caso:<ul>${hallazgosHtml}</ul><b>Conducta general sugerida:</b><ul>
 <li>Considerar bolo adicional con coloide (ej. albúmina) si ya se administraron ≥2 bolos de cristaloides</li>
-<li>Iniciar soporte vasopresor (ej. norepinefrina) si persiste hipotensión pese a fluidos adecuados</li>
+<li>Iniciar soporte vasopresor: <b>norepinefrina 0.05–0.5 mcg/kg/min IV</b> (primera línea, titular a PAM ≥65 mmHg) si persiste hipotensión pese a fluidos adecuados; considerar <b>dobutamina 2–20 mcg/kg/min</b> si predomina disfunción de bomba</li>
 <li>Traslado / escalamiento a UCI</li>
 <li>Dirigir estudios según la complicación señalada arriba: ecografía FAST y Hb/Hto seriados (sangrado oculto), troponina/ECG/ecocardiograma (miocarditis), hemocultivo/lactato/procalcitonina (sepsis)</li>
 </ul>`);
@@ -2256,7 +2344,7 @@ function calcOMSFluidos(){
 1) Bolo inicial: <b>${b1} mL</b> (20 mL/kg) en 15–30 minutos → reevaluar.<br>
 2) Mejoría → reducir a <b>${p10} mL/h</b> (10 mL/kg/h) × 1–2h → mejoría → <b>${p7}–${p7b} mL/h</b> (5–7 mL/kg/h) × 4–6h → mejoría → <b>${p5}–${p5b} mL/h</b> (3–5 mL/kg/h) × 2–4h → mejoría → <b>${p3}–${p3b} mL/h</b> (2–4 mL/kg/h) × 24–48h.<br>
 3) Persisten signos de choque: repetir bolo de <b>${b1} mL</b> en 15–30min (hasta 3 cargas totales).<br>
-4) Choque persistente tras 3ª carga: determinar función de bomba y considerar aminas; evaluar acidosis persistente y riesgo de hemorragia oculta; considerar coloide; manejar de preferencia en UCI.<br>
+4) Choque persistente tras 3ª carga: determinar función de bomba (ecocardiograma si disponible). Norepinefrina 0.05–0.5 mcg/kg/min IV (primera línea, titular a PAM ≥65) o dobutamina 2–20 mcg/kg/min si disfunción de bomba/miocarditis; evaluar acidosis persistente y riesgo de hemorragia oculta; considerar coloide; manejar de preferencia en UCI.<br>
 ${comorbido?`<span style="font-weight:700">⚖️ Comorbilidad/embarazo/≥65 años: el manejo debe ser individualizado y con monitoreo estricto.</span><br>`:""}
 <span style="font-weight:700">Mejoría clínica = remisión de signos de choque + signos vitales estables + diuresis normal/aumentada + Hto en descenso.</span></div>`;
   }
@@ -2328,6 +2416,10 @@ function evaluarAvanceInfusion(){
   // Balance Hídrico y pueden aparecer en cualquier momento entre reevaluaciones. Esta es la
   // 4ª rama del algoritmo OMS que antes faltaba por completo: "sobrecarga → reducir/suspender".
   const signosSobrecarga=[...document.querySelectorAll("#tabHidratacion .sintoma-item.active")].map(x=>x.querySelector("span").textContent);
+  if(val("vci")==="dilatada")signosSobrecarga.push("VCI dilatada/sin colapso (POCUS)");
+  if(val("derramePleuralUS")==="masivo")signosSobrecarga.push("Derrame pleural masivo (POCUS)");
+  if(val("ascitisUS")==="si")signosSobrecarga.push("Ascitis (POCUS)");
+  if(val("lineasB")==="si")signosSobrecarga.push("Líneas B difusas bilaterales (POCUS — edema pulmonar)");
   if(signosSobrecarga.length>0){
     infusionState.alertaSobrecarga=true;
     infusionState.signosSobrecarga=signosSobrecarga;
@@ -2715,6 +2807,21 @@ function detectarChoqueRefractario(){
     const[a,b,c]=withHto.slice(-3);
     if(a.hto<b.hto&&b.hto<c.hto)hallazgos.push({texto:"Hematocrito en ascenso sostenido (3 mediciones consecutivas)",complicacion:"Fuga plasmática progresiva / síndrome de fuga capilar"});
   }
+  // PATRÓN OMS EXPLÍCITO: Diuresis <0.5 mL/kg/h + Hematocrito elevado/en ascenso + Taquicardia
+  // persistente (para la edad) simultáneos = señal fuerte de expansión insuficiente, más
+  // específica que cualquiera de los tres hallazgos por separado.
+  const rangoTaq=rangoPorEdad(num("edad"));
+  const fcMaxTaq=rangoTaq?rangoTaq.fcMax:100;
+  const withGuFc=trendData.filter(r=>r.gu>0&&r.fc>0);
+  if(withGuFc.length>=2){
+    const[a,b]=withGuFc.slice(-2);
+    const oliguriaPersistente=a.gu<0.5&&b.gu<0.5;
+    const taquicardiaPersistente=a.fc>fcMaxTaq&&b.fc>fcMaxTaq;
+    const htoElevadoOSubiendo=withHto.length>=2&&(withHto[withHto.length-1].hto>=45||withHto[withHto.length-1].hto>withHto[withHto.length-2].hto);
+    if(oliguriaPersistente&&taquicardiaPersistente&&htoElevadoOSubiendo){
+      hallazgos.push({texto:`Patrón combinado OMS: diuresis &lt;0.5 mL/kg/h + Hto elevado/en ascenso + taquicardia &gt;${fcMaxTaq}/min persistentes`,complicacion:"⚠ AUMENTAR LA EXPANSIÓN DE VOLUMEN — expansión actual insuficiente para la fuga plasmática en curso"});
+    }
+  }
   const withPam=trendData.filter(r=>r.pam>0);
   if(withPam.length>=2){
     const[a,b]=withPam.slice(-2);
@@ -2821,7 +2928,7 @@ function renderTrend(){
   // Fracaso de reanimación / choque refractario (lógica centralizada, ver detectarChoqueRefractario)
   const refract=detectarChoqueRefractario();
   refract.hallazgos.forEach(h=>msgs.push({sev:"rojo",txt:`🚨 ${h.texto} → <i>${h.complicacion}</i>`}));
-  if(refract.refractario)msgs.push({sev:"rojo",txt:"🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial. Ver complicaciones específicas señaladas arriba. Considerar soporte vasopresor e ingreso/escalamiento a UCI."});
+  if(refract.refractario)msgs.push({sev:"rojo",txt:"🚨 CHOQUE REFRACTARIO — no responde a la reanimación inicial. Ver complicaciones específicas señaladas arriba. Iniciar norepinefrina 0.05–0.5 mcg/kg/min IV (PAM ≥65) e ingreso/escalamiento a UCI."});
   if(alertBox)alertBox.innerHTML=msgs.map(m=>`<div class="alerta-box ${m.sev}">${m.txt}</div>`).join("");
   calcOMSFluidos();
   if(typeof evaluarAvanceInfusion==="function")evaluarAvanceInfusion();
